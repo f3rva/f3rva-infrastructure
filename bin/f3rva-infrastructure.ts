@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { F3RvaInfrastructureStack } from '../lib/f3rva-infrastructure-stack';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import { F3RVAStackProps } from '../lib/f3rva-stack-properties';
+import { F3RVAStackNetwork } from '../lib/f3rva-stack-network';
+import { F3RVAStackStorage } from '../lib/f3rva-stack-storage';
+
+let stackProperties: { [name: string]: F3RVAStackProps } = {};
+
+const awsAccountDevelopment = { account: '908188673576', region: 'us-east-1' };
+const awsAccountProduction = { account: 'TBD', region: 'us-east-1' };
+
+stackProperties["f3rva-dev"] = { 
+  env: awsAccountDevelopment,
+  appName: 'f3rva',
+  envName: 'dev'
+}
 
 const app = new cdk.App();
-new F3RvaInfrastructureStack(app, 'F3RvaInfrastructureStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
-
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+new F3RVAStackNetwork(app, 'F3RVA-network-dev', stackProperties["f3rva-dev"]);
