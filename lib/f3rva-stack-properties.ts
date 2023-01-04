@@ -3,5 +3,9 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2'
 
 export interface F3RVAStackProps extends cdk.StackProps {
     appName: 'f3rva',
-    envName: 'dev' | 'prod'
+    envName: 'dev' | 'prod',
+    webInstanceType: ec2.InstanceType,
+    vpc?: ec2.Vpc,
+    securityGroup?: ec2.SecurityGroup,
+    amiId: string
 }
