@@ -7,6 +7,10 @@ import { F3RVAStackProps } from './f3rva-stack-properties';
 // Stack to create the primary VPC and all necessary subnets
 //
 export class F3RVAStackNetwork extends cdk.Stack {
+  // properties that can be shared to other stacks
+  public readonly vpc: ec2.Vpc;
+  public readonly securityGroup: ec2.SecurityGroup;
+
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
 
@@ -18,7 +22,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
     const vpcName = `${appName}-${envName}`;
     const vpc = new ec2.Vpc(this, vpcName, {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
-      maxAzs: 2,
+      maxAzs: 1,
       natGateways: 0,
       
       subnetConfiguration: [
@@ -26,16 +30,6 @@ export class F3RVAStackNetwork extends cdk.Stack {
           cidrMask: 24,
           name: "public",
           subnetType: ec2.SubnetType.PUBLIC
-        },
-        {
-          cidrMask: 24,
-          name: "application",
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS
-        },
-        {
-          cidrMask: 24,
-          name: "restricted",
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED
         }
       ]
     });
@@ -57,11 +51,41 @@ export class F3RVAStackNetwork extends cdk.Stack {
 
     // tag subnets
     tagAllSubnets(vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
-    tagAllSubnets(vpc.isolatedSubnets, 'Name', `${vpcName}/application`, true);
-    tagAllSubnets(vpc.privateSubnets, 'Name', `${vpcName}/restricted`, true);
-
     tagAllSubnets(vpc.publicSubnets, 'Environment', `${envName}`, false);
-    tagAllSubnets(vpc.isolatedSubnets, 'Environment', `${envName}`, false);
-    tagAllSubnets(vpc.privateSubnets, 'Environment', `${envName}`, false);
+
+    // assign VPC property so it is accessible in other stacks
+    this.vpc = vpc;
+
+    // create security group
+    const securityGroupName = `${appName}-${envName}/security-group`;
+    this.securityGroup = new ec2.SecurityGroup(this, securityGroupName, {
+      vpc,
+      description: "Allow SSH (TCP port 22) and HTTP (TCP port 80/443) in",
+      allowAllOutbound: true,
+    });
+
+    // Allow SSH access on port tcp/22
+    this.securityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(22),
+      "Allow SSH Access"
+    );
+
+    // Allow HTTP access on port tcp/80
+    this.securityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      "Allow HTTP Access"
+    );
+
+    // Allow HTTP access on port tcp/80
+    this.securityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      "Allow HTTPS Access"
+    );
+
+    // create a tag to name the Security Group
+    cdk.Tags.of(this.securityGroup).add('Name', `${securityGroupName}`)
   }
 }
