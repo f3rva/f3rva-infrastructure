@@ -10,15 +10,16 @@ export class F3RVAStackCompute extends cdk.Stack {
     super(scope, id, props);
 
     // stack parameters
-    const envName = new cdk.CfnParameter(this, "envName", {
-      type: "String",
-      description: "The environment to be used for this stack creation."});
     const branch = new cdk.CfnParameter(this, "branch", {
       type: "String",
+      default: "",
       description: "OPTIONAL: The branch to pull from for this build"});
+    const branchValue = branch.valueAsString;
   
       // stack props
     const appName = props!.appName;
+    const envName = props!.envName;
+
     const instanceType = props!.webInstanceType!;
     const vpc = props!.vpc!;
     const securityGroup = props!.securityGroup!;
@@ -43,11 +44,11 @@ export class F3RVAStackCompute extends cdk.Stack {
     });
 
     instance.addUserData(
-      "#!/bin/bash",
-      `BRANCH_NAME=-${branch}`
+      `BRANCH_NAME=${branchValue}`,
+      `ENV_NAME=${envName}`
     );
     instance.addUserData(
-      readFileSync(`./scripts/bootstrap-${envName}.sh`, "utf8")
+      readFileSync(`./scripts/bootstrap.sh`, "utf8")
     );
     instance.addUserData(      
       `./setup-core.sh ${envName}`

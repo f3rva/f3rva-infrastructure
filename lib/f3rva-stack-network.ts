@@ -14,11 +14,9 @@ export class F3RVAStackNetwork extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
 
-    // stack parameters
-    const appName = props!.appName!;
-    const envName = new cdk.CfnParameter(this, "envName", {
-      type: "String",
-      description: "The environment to be used for this stack creation."});
+    // stack props
+    const appName = props!.appName;
+    const envName = props!.envName;
 
     // create new vpc
     const vpcName = `${appName}-${envName}`;
