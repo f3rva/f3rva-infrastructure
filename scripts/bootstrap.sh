@@ -3,12 +3,12 @@ if [[ -z ${BRANCH_NAME} ]]; then
 fi
 
 # for dev, pull down the latest from main
-GITHUB_REPO=https://github.com/f3rva/f3rva-infrastructure
-SCRIPTS_ROOT=${GITHUB_REPO}/raw/${BRANCH_NAME}/SCRIPTS_ROOT
+GITHUB_RAW=https://raw.githubusercontent.com/f3rva/f3rva-infrastructure
+SCRIPTS_ROOT=${GITHUB_RAW}/${BRANCH_NAME}/scripts
 
 mkdir -p /app/bootstrap
 cd /app/bootstrap
 
-wget env-${ENV}.sh
-wget setup-core.sh
-wget setup-httpd.sh
+wget ${SCRIPTS_ROOT}/env-${ENV}.sh
+wget ${SCRIPTS_ROOT}setup-core.sh
+wget ${SCRIPTS_ROOT}setup-httpd.sh
