@@ -15,7 +15,6 @@ const awsAccountProduction = { account: 'TBD', region: 'us-east-1' };
 stackProperties["f3rva-dev"] = { 
   env: awsAccountDevelopment,
   appName: 'f3rva',
-  envName: 'dev',
   // t3a micro, could use t4g micro if it was available
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: 'ami-09a0021c44c807f3f'
