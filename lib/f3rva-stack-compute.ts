@@ -47,7 +47,7 @@ export class F3RVAStackCompute extends cdk.Stack {
       "BRANCH_NAME=${{branch}}"
     );
     instance.addUserData(
-      readFileSync('./scripts/bootstrap-${{envName}}.sh', 'utf8')
+      readFileSync("./scripts/bootstrap-${{envName}}.sh", "utf8")
     );
     instance.addUserData(      
       "./setup-core.sh ${{envName}}"
