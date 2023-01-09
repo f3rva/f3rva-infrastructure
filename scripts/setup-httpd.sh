@@ -20,3 +20,6 @@ yum install php-dom
 yum install php-mbstring
 
 systemctl restart httpd
+
+# make replacements to httpd.conf
+sed -i -e 's/ServerAdmin root@localhost/ServerAdmin admin@f3rva.org/g' /etc/httpd/conf/httpd.conf
