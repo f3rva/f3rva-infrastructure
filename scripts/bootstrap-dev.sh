@@ -6,7 +6,7 @@ fi
 
 # for dev, pull down the latest from main
 GITHUB_REPO=https://github.com/f3rva/f3rva-infrastructure
-SCRIPTS_ROOT=${GITHUB_REPO}/raw/main/SCRIPTS_ROOT
+SCRIPTS_ROOT=${GITHUB_REPO}/raw/${BRANCH_NAME}/SCRIPTS_ROOT
 ENV=${1}
 
 wget env-${ENV}.sh
