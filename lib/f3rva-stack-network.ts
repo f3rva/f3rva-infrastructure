@@ -49,7 +49,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
       }
     };
 
-    // tag subnets
+    // tag public subnets
     tagAllSubnets(vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
     tagAllSubnets(vpc.publicSubnets, 'Environment', `${envName}`, false);
 
@@ -60,7 +60,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
     const securityGroupName = `${appName}-${envName}/security-group`;
     this.securityGroup = new ec2.SecurityGroup(this, securityGroupName, {
       vpc,
-      description: "Allow SSH (TCP port 22) and HTTP (TCP port 80/443) in",
+      description: "Allow SSH (TCP port 22), HTTP (TCP port 80/443), Database (TCP port 3306) in",
       allowAllOutbound: true,
     });
 
@@ -78,11 +78,18 @@ export class F3RVAStackNetwork extends cdk.Stack {
       "Allow HTTP Access"
     );
 
-    // Allow HTTP access on port tcp/80
+    // Allow HTTPS access on port tcp/443
     this.securityGroup.addIngressRule(
       ec2.Peer.anyIpv4(),
       ec2.Port.tcp(443),
       "Allow HTTPS Access"
+    );
+
+    // Allow Database access on port tcp/3306
+    this.securityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(3306),
+      "Allow Database Access"
     );
 
     // create a tag to name the Security Group
