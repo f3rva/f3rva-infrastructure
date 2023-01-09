@@ -9,6 +9,8 @@ SCRIPTS_ROOT=${GITHUB_RAW}/${BRANCH_NAME}/scripts
 mkdir -p /app/bootstrap
 cd /app/bootstrap
 
-wget ${SCRIPTS_ROOT}/env-${ENV}.sh
-wget ${SCRIPTS_ROOT}setup-core.sh
-wget ${SCRIPTS_ROOT}setup-httpd.sh
+wget ${SCRIPTS_ROOT}/env-${ENV_NAME}.sh
+wget ${SCRIPTS_ROOT}/setup-core.sh
+wget ${SCRIPTS_ROOT}/setup-httpd.sh
+
+chmod 755 *.sh
