@@ -1,5 +1,5 @@
-if [[ ${BRANCH_NAME} == ""]]; then
-  ${BRANCH_NAME}="main";
+if [[ -z ${BRANCH_NAME} ]]; then
+  BRANCH_NAME=main;
 fi
 
 # for dev, pull down the latest from main
