@@ -34,7 +34,7 @@ export class F3RVAStackCompute extends cdk.Stack {
     //   keyName: 'wordpress-keypair',
     // });
 
-    const instance = new ec2.Instance(this, "${{appName}}-${{envName}}-web-instance", {
+    const instance = new ec2.Instance(this, "web-instance", {
       vpc: vpc,
       instanceType: instanceType,
       machineImage: ami,
@@ -44,13 +44,13 @@ export class F3RVAStackCompute extends cdk.Stack {
 
     instance.addUserData(
       "#!/bin/bash",
-      "BRANCH_NAME=${{branch}}"
+      `BRANCH_NAME=-${branch}`
     );
     instance.addUserData(
-      readFileSync("./scripts/bootstrap-${{envName}}.sh", "utf8")
+      readFileSync(`./scripts/bootstrap-${envName}.sh`, "utf8")
     );
     instance.addUserData(      
-      "./setup-core.sh ${{envName}}"
+      `./setup-core.sh ${envName}`
     );
   }
 }
