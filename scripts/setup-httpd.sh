@@ -15,11 +15,15 @@ chmod 2775 /var/www
 find /var/www -type d -exec sudo chmod 2775 {} \;
 find /var/www -type f -exec sudo chmod 0664 {} \;
 
-#yum install composer
-yum install php-dom
-yum install php-mbstring
-
-systemctl restart httpd
+yum install -y mod_ssl
+yum install -y php-dom
+yum install -y php-mbstring
 
 # make replacements to httpd.conf
 sed -i -e 's/ServerAdmin root@localhost/ServerAdmin admin@f3rva.org/g' /etc/httpd/conf/httpd.conf
+
+# setup SSL
+
+# restart apache
+systemctl restart httpd
+
