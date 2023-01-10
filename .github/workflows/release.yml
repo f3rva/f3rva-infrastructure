@@ -1,0 +1,65 @@
+name: F3RVA Infrastructure Release
+
+on: 
+  push:
+    tags: 
+      - '*'
+
+jobs:
+
+  # create release
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set Variables
+        id: vars
+        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+
+      - name: Checkout tag
+        uses: actions/checkout@v2
+        with:
+          ref: '${{ steps.vars.outputs.tag }}'
+
+      - name: Create version file
+        run: |
+          echo 'VERSION: ${{ steps.vars.outputs.tag }}' >> VERSION
+
+      - name: Create distribution package
+        id: create-distribution
+        run: |
+          mkdir dist
+          tar cvfz dist/f3rva-infrastructure-${{ steps.vars.outputs.tag }}.tar.gz \
+          LICENSE \
+          VERSION \
+          bin \
+          lib \
+          scripts \
+          test \
+          cdk.context.json \
+          cdk.json \
+          package-lock.json \
+          package.json \
+          tsconfig.json \
+
+      - name: Create release
+        uses: actions/create-release@v1
+        id: create-release
+        with:
+          draft: false
+          prerelease: false
+          release_name: 'release-${{ steps.vars.outputs.tag }}'
+          tag_name: ${{ steps.vars.outputs.tag }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      
+      - name: Add build artifacts
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: ./dist/f3rva-infrastructure-${{ steps.vars.outputs.tag }}.tar.gz
+          asset_name: f3rva-infrastructure-${{ steps.vars.outputs.tag }}.tar.gz
+          asset_content_type: application/gzip

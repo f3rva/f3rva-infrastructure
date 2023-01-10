@@ -17,8 +17,9 @@ stackProperties["f3rva-dev"] = {
   appName: 'f3rva',
   envName: 'dev',
   // t3a micro, could use t4g micro if it was available
-  webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
-  amiId: 'ami-09a0021c44c807f3f'
+  webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.NANO),
+  //amiId: 'ami-09a0021c44c807f3f' // bitnami
+  amiId: 'ami-0b5eea76982371e91' // aws linux 2
 }
 
 const app = new cdk.App();
