@@ -3,7 +3,7 @@ name: F3RVA Infrastructure Release
 on: 
   push:
     tags: 
-      - '*'
+      - 'v*.*.*'
 
 jobs:
 
