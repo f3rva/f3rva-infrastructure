@@ -16,6 +16,11 @@ jobs:
         id: vars
         run: echo "{tag}=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
+      - name: Checkout tag
+        uses: actions/checkout@v2
+        with:
+          ref: '${{ steps.vars.outputs.tag }}'
+
       - name: Create version file
         run: |
           echo 'VERSION: ${{ steps.vars.outputs.tag }}' >> VERSION
