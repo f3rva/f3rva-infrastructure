@@ -37,10 +37,10 @@ jobs:
           files: |
             LICENSE
             VERSION
-            bin
-            lib
-            scripts
-            test
+            bin/*
+            lib/*
+            scripts/*
+            test/*
             cdk.context.json
             cdk.json
             package-lock.json
