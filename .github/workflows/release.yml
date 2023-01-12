@@ -14,21 +14,21 @@ jobs:
     steps:
       - name: Set Variables
         id: vars
-        run: echo "{tag}=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
 
       - name: Checkout tag
         uses: actions/checkout@v2
         with:
-          ref: '${{ steps.vars.outputs.tag }}'
+          ref: '${{ env.tag }}'
 
       - name: Create version file
         run: |
-          echo 'VERSION: ${{ steps.vars.outputs.tag }}' >> VERSION
+          echo 'VERSION: ${{ env.tag }}' >> VERSION
 
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
-          name: 'release-${{ steps.vars.outputs.tag }}'
+          name: 'release-${{ env.tag }}'
           body_path: 'CHANGELOG.md'
           draft: false
           prerelease: false
