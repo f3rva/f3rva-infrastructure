@@ -35,14 +35,4 @@ jobs:
           generate_release_notes: true
           append_body: true
           files: |
-            LICENSE
             VERSION
-            bin/*
-            lib/*
-            scripts/*
-            test/*
-            cdk.context.json
-            cdk.json
-            package-lock.json
-            package.json
-            tsconfig.json
