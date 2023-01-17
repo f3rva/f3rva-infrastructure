@@ -21,9 +21,9 @@ jobs:
         with:
           ref: '${{ env.tag }}'
 
-      - name: Create version file
+      - name: Create distribution
         run: |
-          echo 'VERSION: ${{ env.tag }}' >> VERSION
+          tar -czf ${{ env.tag }}-dist.tar.gz scripts
 
       - name: Create release
         uses: softprops/action-gh-release@v1
@@ -35,4 +35,4 @@ jobs:
           generate_release_notes: true
           append_body: true
           files: |
-            VERSION
+            ${{ env.tag }}-dist.tar.gz
