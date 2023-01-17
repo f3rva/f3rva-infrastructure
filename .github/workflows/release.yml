@@ -23,7 +23,7 @@ jobs:
 
       - name: Create distribution
         run: |
-          tar -czf ${{ env.tag }}-dist.tar.gz scripts
+          tar -czf dist.tar.gz scripts
 
       - name: Create release
         uses: softprops/action-gh-release@v1
@@ -35,4 +35,4 @@ jobs:
           generate_release_notes: true
           append_body: true
           files: |
-            ${{ env.tag }}-dist.tar.gz
+            dist.tar.gz
