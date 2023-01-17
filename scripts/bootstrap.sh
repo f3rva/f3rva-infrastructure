@@ -19,7 +19,7 @@ if [[ ! -z ${TAG_NAME} ]]; then
   # extract the archive
   tar -xzf dist.tar.gz
 
-elif [[ ! -z ${BRANCH_NAME} ]; then
+elif [[ ! -z ${BRANCH_NAME} ]]; then
   # pull down from branch
   SCRIPTS_ROOT=${BRANCH_BASE}/${BRANCH_NAME}/scripts
 
