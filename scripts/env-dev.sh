@@ -1,3 +1,7 @@
 #!/bin/bash
 
 ADMIN_EMAIL=admin@f3rva.org
+DB_NAME=wpdev
+DB_USER=wpdev
+DB_PASSWORD=A5FYGnH1ZTlY
+DB_HOST=107.180.58.52
