@@ -1,3 +1,3 @@
 #!/bin/bash
 
-LOG=bootstrap.log
+BOOTSTRAP_LOG=bootstrap.log
