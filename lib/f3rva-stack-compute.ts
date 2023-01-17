@@ -9,13 +9,19 @@ export class F3RVAStackCompute extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
 
+    const tag = new cdk.CfnParameter(this, "tag", {
+      type: "String",
+      default: "",
+      description: "OPTIONAL: The tag to use for the build. Required if branch is not specified."});
+    const tagValue = tag.valueAsString;
+  
     // stack parameters
     const branch = new cdk.CfnParameter(this, "branch", {
       type: "String",
       default: "",
       description: "OPTIONAL: The branch to pull from for this build"});
     const branchValue = branch.valueAsString;
-  
+
       // stack props
     const appName = props!.appName;
     const envName = props!.envName;
@@ -45,7 +51,8 @@ export class F3RVAStackCompute extends cdk.Stack {
 
     instance.addUserData(
       `BRANCH_NAME=${branchValue}`,
-      `ENV_NAME=${envName}`
+      `ENV_NAME=${envName}`,
+      `TAG_NAME=${tagValue}`
     );
     instance.addUserData(
       readFileSync(`./scripts/bootstrap.sh`, "utf8")

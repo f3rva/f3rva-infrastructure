@@ -20,7 +20,7 @@ yum install -y php-dom
 yum install -y php-mbstring
 
 # make replacements to httpd.conf
-sed -i -e 's/ServerAdmin root@localhost/ServerAdmin admin@f3rva.org/g' /etc/httpd/conf/httpd.conf
+sed -i -e "s/ServerAdmin root@localhost/ServerAdmin ${ADMIN_EMAIL}/g" /etc/httpd/conf/httpd.conf
 
 # setup SSL
 
