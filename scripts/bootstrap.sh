@@ -20,6 +20,9 @@ if [[ ! -z ${TAG_NAME} ]]; then
   tar -xzf dist.tar.gz
 
 elif [[ ! -z ${BRANCH_NAME} ]]; then
+  mkdir scripts
+  cd scripts
+
   # pull down from branch
   SCRIPTS_ROOT=${BRANCH_BASE}/${BRANCH_NAME}/scripts
 
@@ -28,10 +31,13 @@ elif [[ ! -z ${BRANCH_NAME} ]]; then
   wget ${SCRIPTS_ROOT}/setup-core.sh
   wget ${SCRIPTS_ROOT}/setup-httpd.sh
   wget ${SCRIPTS_ROOT}/setup-wordpress.sh
+
+  cd ..
 else
   # fatal error
   >&2 echo "TAG_NAME or BRANCH_NAME is required"
   exit 1
 fi
 
+cd scripts
 chmod 755 *.sh
