@@ -18,7 +18,6 @@ stackProperties["f3rva-dev"] = {
   envName: 'dev',
   // t3a micro, could use t4g micro if it was available
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.NANO),
-  //amiId: 'ami-09a0021c44c807f3f' // bitnami
   amiId: 'ami-0b5eea76982371e91' // aws linux 2
 }
 
