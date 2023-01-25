@@ -20,7 +20,7 @@ if [[ ! -z ${TAG_NAME} ]]; then
   tar -xzf dist.tar.gz
 
 elif [[ ! -z ${BRANCH_NAME} ]]; then
-  mkdir scripts
+  mkdir conf scripts
   cd scripts
 
   # pull down from branch
@@ -32,6 +32,10 @@ elif [[ ! -z ${BRANCH_NAME} ]]; then
   wget ${SCRIPTS_ROOT}/setup-httpd.sh
   wget ${SCRIPTS_ROOT}/setup-wordpress.sh
 
+  CONF_ROOT=${BRANCH_BASE}/${BRANCH_NAME}/conf
+  cd ../conf
+  wget ${CONF_ROOT}/website-${ENV_NAME}.f3rva.org.conf
+  
   cd ..
 else
   # fatal error

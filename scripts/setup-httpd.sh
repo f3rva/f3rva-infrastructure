@@ -17,10 +17,14 @@ find /var/www -type f -exec sudo chmod 0664 {} \;
 
 yum install -y mod_ssl
 yum install -y php-dom
+yum install -y php-gd
 yum install -y php-mbstring
 
 # make replacements to httpd.conf
 sed -i -e "s/ServerAdmin root@localhost/ServerAdmin ${ADMIN_EMAIL}/g" /etc/httpd/conf/httpd.conf
+
+# copy website conf
+cp ../conf/*.conf /etc/httpd/conf.d
 
 # setup SSL
 
