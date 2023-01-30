@@ -1,0 +1,58 @@
+name: F3RVA Infrastructure Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      env: 
+        description: "Environment to deploy"
+        required: true
+        type: environment
+      stack:
+        description: "Stack to deploy"
+        required: true
+        type: choice
+        options: 
+        - network
+        - wordpress
+      release: 
+        description: "Release to deploy"
+        required: true
+        type: string
+        default: "vx.x.x"
+
+jobs:
+  deploy_stack:
+    name: Deploy stack
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.env }}
+    steps:
+    - name: Echo environment
+      run: |
+        echo "region: ${{ vars.AWS_REGION }}"
+        echo "key: ${{ vars.KEY }}"
+
+    - name: Checkout tag
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.release }}
+
+    - name: Setup node
+      uses: actions/setup-node@v3
+      with:
+        node-version: "18"
+
+    - name: Configure aws credentials
+      uses: aws-actions/configure-aws-credentials@master
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
+        aws-region: ${{ vars.AWS_REGION }}
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Diff definition to currently deployed stack
+      run: npm run cdk diff F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }}
+
+    - name: Deploy stack
+      run: npm run cdk deploy F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }} --require-approval never
