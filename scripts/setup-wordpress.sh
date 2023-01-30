@@ -19,8 +19,8 @@ cp -p wordpress/wp-config-sample.php wordpress/wp-config.php
 # replace db connection info
 sed -i -e "s/'DB_NAME', 'database_name_here'/'DB_NAME', '${DB_NAME}'/g" wordpress/wp-config.php
 sed -i -e "s/'DB_USER', 'username_here'/'DB_USER', '${DB_USER}'/g" wordpress/wp-config.php
-sed -i -e "s/'DB_PASSWORD', 'password_here'/'DB_PASSWORD', '${DB_USER}'/g" wordpress/wp-config.php
-sed -i -e "s/'DB_HOST', 'localhost'/'DB_HOST', '${DB_USER}'/g" wordpress/wp-config.php
+sed -i -e "s/'DB_PASSWORD', 'password_here'/'DB_PASSWORD', '${DB_PASSWORD}'/g" wordpress/wp-config.php
+sed -i -e "s/'DB_HOST', 'localhost'/'DB_HOST', '${DB_HOST}'/g" wordpress/wp-config.php
 
 # regenerate and replace placeholder salts
 curl https://api.wordpress.org/secret-key/1.1/salt/ >> salt.txt
