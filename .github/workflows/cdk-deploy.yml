@@ -19,11 +19,18 @@ on:
         required: true
         type: string
         default: "vx.x.x"
+    env:
+      awsRegion: ${{ vars.AWS_REGION }}
 
 jobs:
   deploy_stack:
+    name: Deploy stack
     runs-on: ubuntu-latest
     steps:
+    - name: Echo
+      run: |
+        echo "vars: ${{ vars.KEY }}"
+        echo "env: $awsRegion"
     - name: Checkout
       uses: actions/checkout@v3
     - name: Setup node
@@ -40,5 +47,3 @@ jobs:
       run: yarn
     - name: Synth stack
       run: yarn cdk synth
-    - name: echo
-      run: echo "${{ vars.KEY }}
