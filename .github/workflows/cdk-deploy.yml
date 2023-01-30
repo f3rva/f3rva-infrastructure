@@ -42,7 +42,7 @@ jobs:
         node-version: "18"
 
     - name: Configure aws credentials
-      uses: aws-actions/configure-aws-credentials@v1
+      uses: aws-actions/configure-aws-credentials@master
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
@@ -53,3 +53,6 @@ jobs:
 
     - name: Diff definition to currently deployed stack
       run: npm run cdk diff F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }}
+
+    - name: Deploy stack
+      run: npm run cdk deploy F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }} --require-approval never
