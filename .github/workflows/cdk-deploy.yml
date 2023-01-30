@@ -31,10 +31,10 @@ jobs:
         echo "region: ${{ vars.AWS_REGION }}"
         echo "key: ${{ vars.KEY }}"
 
-    - uses: robinraju/release-downloader@v1.7
+    - name: Checkout tag
+      uses: actions/checkout@v3
       with:
-        releaseId: "release-${{ github.event.inputs.release }}"
-        fileName: "foo.zip"
+        ref: ${{ github.event.inputs.release }}
 
     - name: Setup node
       uses: actions/setup-node@v3
@@ -47,7 +47,9 @@ jobs:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_KEY }}
         aws-region: ${{ vars.AWS_REGION }}
+
     - name: Install dependencies
       run: npm install
+
     - name: Diff definition to currently deployed stack
       run: npm run cdk diff F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }}
