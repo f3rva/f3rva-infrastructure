@@ -14,8 +14,8 @@ on:
         options: 
         - network
         - wordpress
-      tags: 
-        description: "Tag to deploy"
+      release: 
+        description: "Release to deploy"
         required: true
         type: string
         default: "vx.x.x"
@@ -45,4 +45,4 @@ jobs:
     - name: Install dependencies
       run: npm install
     - name: Diff definition to currently deployed stack
-      run: npm cdk diff F3RVA-${stack}-${{ vars.KEY }}
+      run: npm run cdk diff F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }}
