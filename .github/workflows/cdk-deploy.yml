@@ -19,18 +19,17 @@ on:
         required: true
         type: string
         default: "vx.x.x"
-    env:
-      awsRegion: ${{ vars.AWS_REGION }}
 
 jobs:
   deploy_stack:
     name: Deploy stack
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.env }}
     steps:
     - name: Echo
       run: |
-        echo "vars: ${{ vars.KEY }}"
-        echo "env: $awsRegion"
+        echo "region: ${{ vars.AWS_REGION }}"
+        echo "key: ${{ vars.KEY }}"
     - name: Checkout
       uses: actions/checkout@v3
     - name: Setup node
