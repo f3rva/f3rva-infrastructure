@@ -30,12 +30,17 @@ jobs:
       run: |
         echo "region: ${{ vars.AWS_REGION }}"
         echo "key: ${{ vars.KEY }}"
-    - name: Checkout
-      uses: actions/checkout@v3
+
+    - uses: robinraju/release-downloader@v1.7
+      with:
+        releaseId: "release-${{ github.event.inputs.release }}"
+        fileName: "foo.zip"
+
     - name: Setup node
       uses: actions/setup-node@v3
       with:
         node-version: "18"
+
     - name: Configure aws credentials
       uses: aws-actions/configure-aws-credentials@master
       with:
