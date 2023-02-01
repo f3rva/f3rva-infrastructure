@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as iam from 'aws-cdk-lib/aws-iam'
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 import { readFileSync } from 'fs';
@@ -41,12 +42,39 @@ export class F3RVAStackCompute extends cdk.Stack {
     //   keyName: 'wordpress-keypair',
     // });
 
+    // Create a secrets policy statement
+    const secretsReadPolicyStatement = new iam.PolicyStatement({
+      actions: [
+        "secretsmanager:GetResourcePolicy",
+        "secretsmanager:GetSecretValue",
+        "secretsmanager:DescribeSecret",
+        "secretsmanager:ListSecretVersionIds"
+      ],
+      // grant all secrets for the account
+      resources: [`arn:aws:secretsmanager:*:${props!.env!.account}:secret:*`]
+    });
+
+    // create a managed policy
+    const webApplicationPolicy = new iam.Policy(this, "WebApplicationPolicy", {
+      statements: [
+        secretsReadPolicyStatement
+      ]
+    });
+
+    // Create an IAM role for this instance and attach policy
+    const ec2Role = new iam.Role(this, "WebApplicationInstanceRole" , {
+      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
+      description: 'IAM role for web instances'
+    });
+    ec2Role.attachInlinePolicy(webApplicationPolicy);
+
     const instance = new ec2.Instance(this, "web-instance", {
       vpc: vpc,
       instanceType: instanceType,
       machineImage: ami,
       securityGroup: securityGroup,
-      keyName: "f3rva-dev-wordpress-key-pair"
+      keyName: "f3rva-dev-wordpress-key-pair",
+      role: ec2Role
     });
 
     instance.addUserData(
