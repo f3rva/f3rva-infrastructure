@@ -11,7 +11,7 @@ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip
 unzip awscliv2.zip
 ./aws/install
 
-cd ../scripts
+cd scripts
 
 # source environment specific variables.  env passed in from user data
 . ./env.sh
