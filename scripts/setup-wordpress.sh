@@ -17,10 +17,10 @@ tar -xzf latest.tar.gz
 cp -p wordpress/wp-config-sample.php wordpress/wp-config.php
 
 # replace db connection info
-DB_NAME=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region us-east-1 | jq -r '[.SecretString][0]' | jq -r '.dbname'`
-DB_USER=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region us-east-1 | jq -r '[.SecretString][0]' | jq -r '.username'`
-DB_PASSWORD=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region us-east-1 | jq -r '[.SecretString][0]' | jq -r '.password'`
-DB_HOST=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region us-east-1 | jq -r '[.SecretString][0]' | jq -r '.host'`
+DB_NAME=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.dbname'`
+DB_USER=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.username'`
+DB_PASSWORD=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.password'`
+DB_HOST=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.host'`
 
 sed -i -e "s/'DB_NAME', 'database_name_here'/'DB_NAME', '${DB_NAME}'/g" wordpress/wp-config.php
 sed -i -e "s/'DB_USER', 'username_here'/'DB_USER', '${DB_USER}'/g" wordpress/wp-config.php
