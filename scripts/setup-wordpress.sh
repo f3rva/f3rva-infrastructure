@@ -17,6 +17,7 @@ tar -xzf latest.tar.gz
 cp -p wordpress/wp-config-sample.php wordpress/wp-config.php
 
 # replace db connection info
+echo "Getting secrets for region: ${AWS_REGION}"
 DB_NAME=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.dbname'`
 DB_USER=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.username'`
 DB_PASSWORD=`aws secretsmanager get-secret-value --secret-id ${DB_SECRET_KEY} --region ${AWS_REGION} | jq -r '[.SecretString][0]' | jq -r '.password'`

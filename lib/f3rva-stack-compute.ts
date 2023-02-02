@@ -81,9 +81,9 @@ export class F3RVAStackCompute extends cdk.Stack {
     cdk.Tags.of(ec2Instance).add("Name", `${appName}-${envName}-${ec2InstanceName}`);
 
     ec2Instance.addUserData(
+      `export AWS_REGION=${region}`,
       `BRANCH_NAME=${branchValue}`,
       `ENV_NAME=${envName}`,
-      `AWS_REGION=${region}`,
       `TAG_NAME=${tagValue}`
     );
     ec2Instance.addUserData(
