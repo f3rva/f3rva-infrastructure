@@ -26,7 +26,8 @@ const app = new cdk.App();
 
 // create the network stack and save the VPC that was created
 const networkStack = new F3RVAStackNetwork(app, 'F3RVA-network-dev', stackProperties["f3rva-dev"]);
-stackProperties["f3rva-dev"].vpc = networkStack.vpc;
 stackProperties["f3rva-dev"].securityGroup = networkStack.securityGroup;
+stackProperties["f3rva-dev"].vpc = networkStack.vpc;
+stackProperties["f3rva-dev"].webEIP = networkStack.webEIP;
 
 const ec2Stack = new F3RVAStackCompute(app, 'F3RVA-wordpress-dev', stackProperties["f3rva-dev"]);

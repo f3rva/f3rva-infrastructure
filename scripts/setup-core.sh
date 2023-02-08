@@ -15,7 +15,7 @@ cd scripts
 
 # source environment specific variables.  env passed in from user data
 . ./env.sh
-. ./env-${1}.sh
+. ./env-${ENV_NAME}.sh
 
 # setup application stack
 ./setup-httpd.sh  >> ${BOOTSTRAP_LOG} 2>&1

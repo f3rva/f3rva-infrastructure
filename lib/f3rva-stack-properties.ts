@@ -7,6 +7,7 @@ export interface F3RVAStackProps extends cdk.StackProps {
     webInstanceType: ec2.InstanceType,
     vpc?: ec2.Vpc,
     securityGroup?: ec2.SecurityGroup,
+    webEIP?: ec2.CfnEIP,
     amiId: string,
     keyPair: string
 }

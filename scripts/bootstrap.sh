@@ -35,6 +35,8 @@ elif [[ ! -z ${BRANCH_NAME} ]]; then
   CONF_ROOT=${BRANCH_BASE}/${BRANCH_NAME}/conf
   cd ../conf
   wget ${CONF_ROOT}/website-${ENV_NAME}.f3rva.org.conf
+  wget ${CONF_ROOT}/website-${ENV_NAME}api.f3rva.org.conf
+  wget ${CONF_ROOT}/website-${ENV_NAME}bd.f3rva.org.conf
   
   cd ..
 else

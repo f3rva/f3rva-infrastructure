@@ -10,6 +10,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
   // properties that can be shared to other stacks
   public readonly vpc: ec2.Vpc;
   public readonly securityGroup: ec2.SecurityGroup;
+  public readonly webEIP: ec2.CfnEIP;
 
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
@@ -97,7 +98,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
 
     // create EIPs
     const webEIPName = `${appName}-${envName}-web-eip`;
-    const webEIP = new ec2.CfnEIP(this, webEIPName, {
+    this.webEIP = new ec2.CfnEIP(this, webEIPName, {
       tags: [ new cdk.Tag("Name", webEIPName)]
     });
   }

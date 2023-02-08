@@ -30,6 +30,7 @@ export class F3RVAStackCompute extends cdk.Stack {
     const instanceType = props!.webInstanceType!;
     const vpc = props!.vpc!;
     const securityGroup = props!.securityGroup!;
+    const webEIP = props!.webEIP!;
     const amiId = props!.amiId;
     const keyPair = props!.keyPair;
 
@@ -82,15 +83,21 @@ export class F3RVAStackCompute extends cdk.Stack {
 
     ec2Instance.addUserData(
       `export AWS_REGION=${region}`,
-      `BRANCH_NAME=${branchValue}`,
-      `ENV_NAME=${envName}`,
-      `TAG_NAME=${tagValue}`
+      `export BRANCH_NAME=${branchValue}`,
+      `export ENV_NAME=${envName}`,
+      `export TAG_NAME=${tagValue}`
     );
     ec2Instance.addUserData(
       fs.readFileSync(`./scripts/bootstrap.sh`, "utf8")
     );
     ec2Instance.addUserData(      
-      `./setup-core.sh ${envName}`
+      `./setup-core.sh`
     );
+
+    // associate instance to EIP
+    const eipAssociation = new ec2.CfnEIPAssociation(this, 'assoc', {
+      allocationId: webEIP.attrAllocationId,
+      instanceId: ec2Instance.instanceId
+    });
   }
 }
