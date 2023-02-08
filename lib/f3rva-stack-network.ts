@@ -94,5 +94,11 @@ export class F3RVAStackNetwork extends cdk.Stack {
 
     // create a tag to name the Security Group
     cdk.Tags.of(this.securityGroup).add('Name', `${securityGroupName}`)
+
+    // create EIPs
+    const webEIPName = `${appName}-${envName}-web-eip`;
+    const webEIP = new ec2.CfnEIP(this, webEIPName, {
+      tags: [ new cdk.Tag("Name", webEIPName)]
+    });
   }
 }
