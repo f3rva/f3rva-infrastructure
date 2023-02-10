@@ -35,8 +35,8 @@ sed -i -e "/put your unique phrase here/d" wordpress/wp-config.php
 
 # fix FTP prompts on plugin uploads
 echo "" >> wordpress/wp-config.php
-echo "# fix FTP prompts on plugin uploads" >> wordpress/wp-config
-echo "define('FS_METHOD','direct');" >> wordpress/wp-config
+echo "# fix FTP prompts on plugin uploads" >> wordpress/wp-config.php
+echo "define('FS_METHOD','direct');" >> wordpress/wp-config.php
 echo "" >> wordpress/wp-config.php
 
 # create base directories
