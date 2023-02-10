@@ -1,4 +1,8 @@
 #!/bin/bash
 
 # create base directories
-mkdir /app/${BIGDATA_HOST}
+mkdir -p /app/${BIGDATA_HOST}/web
+mkdir -p /app/${BIGDATA_HOST}/api
+
+chown -R ec2-user:apache /app/${BIGDATA_HOST}
+chmod 2775 /app/${BIGDATA_HOST}

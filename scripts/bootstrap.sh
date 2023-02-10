@@ -28,6 +28,7 @@ elif [[ ! -z ${BRANCH_NAME} ]]; then
 
   wget ${SCRIPTS_ROOT}/env.sh
   wget ${SCRIPTS_ROOT}/env-${ENV_NAME}.sh
+  wget ${SCRIPTS_ROOT}/setup-bigdata.sh
   wget ${SCRIPTS_ROOT}/setup-core.sh
   wget ${SCRIPTS_ROOT}/setup-httpd.sh
   wget ${SCRIPTS_ROOT}/setup-wordpress.sh
@@ -35,7 +36,6 @@ elif [[ ! -z ${BRANCH_NAME} ]]; then
   CONF_ROOT=${BRANCH_BASE}/${BRANCH_NAME}/conf
   cd ../conf
   wget ${CONF_ROOT}/website-${ENV_NAME}-site.f3rva.org.conf
-  wget ${CONF_ROOT}/website-${ENV_NAME}-api.f3rva.org.conf
   wget ${CONF_ROOT}/website-${ENV_NAME}-bd.f3rva.org.conf
   
   cd ..

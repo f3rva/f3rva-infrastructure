@@ -1,9 +1,7 @@
 #/bin/bash
 
-# install apache and setup as a service
+# install apache
 yum install -y httpd
-systemctl start httpd
-systemctl enable httpd
 
 # setup PHP
 amazon-linux-extras install -y php8.1
@@ -23,17 +21,18 @@ yum install -y php-mbstring
 
 # make replacements to httpd.conf
 sed -i -e "s/ServerAdmin root@localhost/ServerAdmin ${ADMIN_EMAIL}/g" /etc/httpd/conf/httpd.conf
+sed -i -e "s/User apache/User ec2-user/g" /etc/httpd/conf/httpd.conf
 
 # make replacements to php.ini
 sed -i -e "s/short_open_tag = Off/short_open_tag = On/g" /etc/php.ini
 
 # copy website conf
 cp ../conf/website-${ENV_NAME}-site.f3rva.org.conf /etc/httpd/conf.d
-cp ../conf/website-${ENV_NAME}-api.f3rva.org.conf /etc/httpd/conf.d
 cp ../conf/website-${ENV_NAME}-bd.f3rva.org.conf /etc/httpd/conf.d
 
 # setup SSL
 
-# restart apache
-systemctl restart httpd
+# start apache and setup as a service
+systemctl start httpd
+systemctl enable httpd
 
