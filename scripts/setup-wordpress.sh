@@ -51,4 +51,7 @@ find /app/${WWW_HOST} -type f -exec sudo chmod 0664 {} \;
 
 # run setup
 cd /app/${WWW_HOST}
+
+# configure wordpress
+wp plugin delete hello-dolly
 #wp core install --url=${WWW_HOST} --title=${SITE_TITLE} --admin_user=${WP_ADMIN_USER} --admin_email=${WP_ADMIN_EMAIL}
