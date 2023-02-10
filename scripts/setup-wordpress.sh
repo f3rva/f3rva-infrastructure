@@ -53,5 +53,8 @@ find /app/${WWW_HOST} -type f -exec sudo chmod 0664 {} \;
 cd /app/${WWW_HOST}
 
 # configure wordpress
-wp plugin delete hello-dolly
-#wp core install --url=${WWW_HOST} --title=${SITE_TITLE} --admin_user=${WP_ADMIN_USER} --admin_email=${WP_ADMIN_EMAIL}
+su apache
+wp plugin update akismet
+wp plugin delete hello
+wp plugin install all-in-one-wp-migration --activate
+exit
