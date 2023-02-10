@@ -21,7 +21,6 @@ yum install -y php-mbstring
 
 # make replacements to httpd.conf
 sed -i -e "s/ServerAdmin root@localhost/ServerAdmin ${ADMIN_EMAIL}/g" /etc/httpd/conf/httpd.conf
-sed -i -e "s/User apache/User ec2-user/g" /etc/httpd/conf/httpd.conf
 
 # make replacements to php.ini
 sed -i -e "s/short_open_tag = Off/short_open_tag = On/g" /etc/php.ini

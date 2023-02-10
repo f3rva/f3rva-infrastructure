@@ -33,6 +33,12 @@ curl https://api.wordpress.org/secret-key/1.1/salt/ >> salt.txt
 sed -i -e "/NONCE_SALT/r salt.txt" wordpress/wp-config.php
 sed -i -e "/put your unique phrase here/d" wordpress/wp-config.php
 
+# fix FTP prompts on plugin uploads
+echo "" >> wordpress/wp-config.php
+echo "# fix FTP prompts on plugin uploads" >> wordpress/wp-config
+echo "define('FS_METHOD','direct');" >> wordpress/wp-config
+echo "" >> wordpress/wp-config.php
+
 # create base directories
 mkdir /app/${WWW_HOST}
 
