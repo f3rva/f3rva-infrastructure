@@ -23,3 +23,5 @@ cd scripts
 # setup wordpress
 ./setup-wordpress.sh >> ${BOOTSTRAP_LOG} 2>&1
 
+# setup bigdata
+./setup-bigdata.sh >> ${BOOTSTRAP_LOG} 2>&1

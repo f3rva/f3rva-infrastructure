@@ -35,7 +35,6 @@ sed -i -e "/put your unique phrase here/d" wordpress/wp-config.php
 
 # create base directories
 mkdir /app/${WWW_HOST}
-mkdir /app/${BIGDATA_HOST}
 
 # copy and setup wordpress
 cp -r wordpress/* /app/${WWW_HOST}

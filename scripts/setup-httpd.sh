@@ -28,9 +28,9 @@ sed -i -e "s/ServerAdmin root@localhost/ServerAdmin ${ADMIN_EMAIL}/g" /etc/httpd
 sed -i -e "s/short_open_tag = Off/short_open_tag = On/g" /etc/php.ini
 
 # copy website conf
-cp ../conf/website-${ENV_NAME}.f3rva.org.conf /etc/httpd/conf.d
-cp ../conf/website-${ENV_NAME}api.f3rva.org.conf /etc/httpd/conf.d
-cp ../conf/website-${ENV_NAME}bd.f3rva.org.conf /etc/httpd/conf.d
+cp ../conf/website-${ENV_NAME}-site.f3rva.org.conf /etc/httpd/conf.d
+cp ../conf/website-${ENV_NAME}-api.f3rva.org.conf /etc/httpd/conf.d
+cp ../conf/website-${ENV_NAME}-bd.f3rva.org.conf /etc/httpd/conf.d
 
 # setup SSL
 
