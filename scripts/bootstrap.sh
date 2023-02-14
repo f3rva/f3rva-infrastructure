@@ -1,8 +1,12 @@
 TAGS_BASE=https://github.com/f3rva/f3rva-infrastructure/releases/download
 BRANCH_BASE=https://raw.githubusercontent.com/f3rva/f3rva-infrastructure
 
+# create app directory
+mkdir /app
+chown ec2-user:apache /app
+
 # create a working directory
-mkdir -p /app/bootstrap
+mkdir /app/bootstrap
 cd /app/bootstrap
 
 # if tag is not empty, use it, otherwise check for branch name
