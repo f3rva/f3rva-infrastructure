@@ -6,28 +6,36 @@ import { F3RVAStackProps } from '../lib/f3rva-stack-properties';
 import { F3RVAStackNetwork } from '../lib/f3rva-stack-network';
 import { F3RVAStackStorage } from '../lib/f3rva-stack-storage';
 import { F3RVAStackCompute } from '../lib/f3rva-stack-compute';
+import { F3RVAStackCertificates } from '../lib/f3rva-stack-certificates';
 
 let stackProperties: { [name: string]: F3RVAStackProps } = {};
+const devStackKey = "f3rva-dev";
+const prodStackKey = "f3rva-prod";
 
 const awsAccountDevelopment = { account: '908188673576', region: 'us-east-1' };
 const awsAccountProduction = { account: 'TBD', region: 'us-east-1' };
 
 stackProperties["f3rva-dev"] = { 
   env: awsAccountDevelopment,
-  appName: 'f3rva',
-  envName: 'dev',
-  // t3a micro, could use t4g micro if it was available
+  appName: "f3rva",
+  envName: "dev",
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.NANO),
-  amiId: 'ami-0b5eea76982371e91', // aws linux 2
-  keyPair: "f3rva-dev-wordpress-key-pair"
+  amiId: "ami-0b5eea76982371e91", // aws linux 2
+  keyPair: "f3rva-dev-wordpress-key-pair",
+  bdDomainName: "devbd.f3rva.org",
+  webDomainName: "dev.f3rva.org"
 }
 
 const app = new cdk.App();
 
 // create the network stack and save the VPC that was created
-const networkStack = new F3RVAStackNetwork(app, 'F3RVA-network-dev', stackProperties["f3rva-dev"]);
-stackProperties["f3rva-dev"].securityGroup = networkStack.securityGroup;
+const networkStack = new F3RVAStackNetwork(app, "F3RVA-network-dev", stackProperties["f3rva-dev"]);
 stackProperties["f3rva-dev"].vpc = networkStack.vpc;
 stackProperties["f3rva-dev"].webEIP = networkStack.webEIP;
 
-const ec2Stack = new F3RVAStackCompute(app, 'F3RVA-wordpress-dev', stackProperties["f3rva-dev"]);
+const certificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", stackProperties["f3rva-dev"]);
+stackProperties["f3rva-dev"].webCertificate = certificatesStack.webCertificate;
+stackProperties["f3rva-dev"].bdCertificate = certificatesStack.bdCertificate;
+
+const ec2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-dev", stackProperties["f3rva-dev"]);
+

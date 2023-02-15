@@ -9,21 +9,22 @@ import { F3RVAStackProps } from './f3rva-stack-properties';
 export class F3RVAStackNetwork extends cdk.Stack {
   // properties that can be shared to other stacks
   public readonly vpc: ec2.Vpc;
-  public readonly securityGroup: ec2.SecurityGroup;
   public readonly webEIP: ec2.CfnEIP;
 
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     // stack props
     const appName = props!.appName;
     const envName = props!.envName;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     // create new vpc
     const vpcName = `${appName}-${envName}`;
     const vpc = new ec2.Vpc(this, vpcName, {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
-      maxAzs: 1,
+      maxAzs: 2,
       natGateways: 0,
       
       subnetConfiguration: [
@@ -50,56 +51,22 @@ export class F3RVAStackNetwork extends cdk.Stack {
       }
     };
 
-    // tag public subnets
+    // tag subnets
     tagAllSubnets(vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
-    tagAllSubnets(vpc.publicSubnets, 'Environment', `${envName}`, false);
 
     // assign VPC property so it is accessible in other stacks
     this.vpc = vpc;
-
-    // create security group
-    const securityGroupName = `${appName}-${envName}/security-group`;
-    this.securityGroup = new ec2.SecurityGroup(this, securityGroupName, {
-      vpc,
-      description: "Allow SSH (TCP port 22), HTTP (TCP port 80/443), Database (TCP port 3306) in",
-      allowAllOutbound: true,
-    });
-
-    // Allow SSH access on port tcp/22
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(22),
-      "Allow SSH Access"
-    );
-
-    // Allow HTTP access on port tcp/80
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(80),
-      "Allow HTTP Access"
-    );
-
-    // Allow HTTPS access on port tcp/443
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(443),
-      "Allow HTTPS Access"
-    );
-
-    // Allow Database access on port tcp/3306
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(3306),
-      "Allow Database Access"
-    );
-
-    // create a tag to name the Security Group
-    cdk.Tags.of(this.securityGroup).add('Name', `${securityGroupName}`)
-
+    
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     // create EIPs
-    const webEIPName = `${appName}-${envName}-web-eip`;
-    this.webEIP = new ec2.CfnEIP(this, webEIPName, {
-      tags: [ new cdk.Tag("Name", webEIPName)]
-    });
+    //const webEIPName = `${appName}-${envName}-web-eip`;
+    //this.webEIP = new ec2.CfnEIP(this, webEIPName, {
+    //  tags: [ new cdk.Tag("Name", webEIPName)]
+    //});
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // tag to all resources created by this stack
+    cdk.Tags.of(this).add("APPLICATION", appName);
+    cdk.Tags.of(this).add("ENVIRONMENT", envName);
   }
 }
