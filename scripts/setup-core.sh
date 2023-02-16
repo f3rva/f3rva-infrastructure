@@ -11,6 +11,14 @@ curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip
 unzip awscliv2.zip
 ./aws/install
 
+# setup efs utilities
+yum install -y amazon-efs-utils
+
+# install pip & botocore
+wget https://bootstrap.pypa.io/pip/3.6/get-pip.py -O /tmp/get-pip.py
+python3 /tmp/get-pip.py
+/usr/local/bin/pip3 install botocore
+
 cd scripts
 
 # source environment specific variables.  env passed in from user data

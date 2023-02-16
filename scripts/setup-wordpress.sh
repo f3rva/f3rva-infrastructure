@@ -39,8 +39,10 @@ echo "# fix FTP prompts on plugin uploads" >> wordpress/wp-config.php
 echo "define('FS_METHOD','direct');" >> wordpress/wp-config.php
 echo "" >> wordpress/wp-config.php
 
-# create base directories
-mkdir /app/${WWW_HOST}
+# create mount point and mount the EFS filesystem
+mkdir -p /app/${WWW_HOST}
+chown -R ec2-user:apache /app/${WWW_HOST}
+mount -t efs ${WP_EFS_FS_ID} /app/${WWW_HOST}
 
 # copy and setup wordpress
 cp -r wordpress/* /app/${WWW_HOST}
