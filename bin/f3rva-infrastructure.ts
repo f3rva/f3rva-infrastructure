@@ -15,7 +15,7 @@ const prodStackKey = "f3rva-prod";
 const awsAccountDevelopment = { account: '908188673576', region: 'us-east-1' };
 const awsAccountProduction = { account: 'TBD', region: 'us-east-1' };
 
-stackProperties["f3rva-dev"] = { 
+stackProperties[devStackKey] = { 
   env: awsAccountDevelopment,
   appName: "f3rva",
   envName: "dev",
@@ -29,13 +29,9 @@ stackProperties["f3rva-dev"] = {
 const app = new cdk.App();
 
 // create the network stack and save the VPC that was created
-const networkStack = new F3RVAStackNetwork(app, "F3RVA-network-dev", stackProperties["f3rva-dev"]);
-stackProperties["f3rva-dev"].vpc = networkStack.vpc;
-stackProperties["f3rva-dev"].webEIP = networkStack.webEIP;
-
-const certificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", stackProperties["f3rva-dev"]);
-stackProperties["f3rva-dev"].webCertificate = certificatesStack.webCertificate;
-stackProperties["f3rva-dev"].bdCertificate = certificatesStack.bdCertificate;
-
-const ec2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-dev", stackProperties["f3rva-dev"]);
+const networkStack = new F3RVAStackNetwork(app, "F3RVA-network-dev", stackProperties[devStackKey]);
+stackProperties[devStackKey].vpc = networkStack.vpc;
+const certificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", stackProperties[devStackKey]);
+const storageStack = new F3RVAStackStorage(app, "F3RVA-storage-dev", stackProperties[devStackKey]);
+const ec2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-dev", stackProperties[devStackKey]);
 

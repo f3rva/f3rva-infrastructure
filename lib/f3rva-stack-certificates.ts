@@ -1,6 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cm from 'aws-cdk-lib/aws-certificatemanager'
-import { CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -23,26 +22,30 @@ export class F3RVAStackCertificates extends cdk.Stack {
     // web certificate
     this.webCertificate = new cm.Certificate(this, "WebsiteCertificate", {
       domainName: webDomainName,
-      validation: CertificateValidation.fromEmail({
+      validation: cm.CertificateValidation.fromEmail({
         "f3rva.org": webDomainName
       })
     });
     
-    new cdk.CfnOutput(this, "WebCertificateArn", {
-      value: this.webCertificate.certificateArn,
-    });
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // bd certificate
     this.bdCertificate = new cm.Certificate(this, "BigDataCertificate", {
       domainName: bdDomainName,
-      validation: CertificateValidation.fromEmail({
+      validation: cm.CertificateValidation.fromEmail({
         "f3rva.org": bdDomainName
       })
     });
     
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // outputs
+    new cdk.CfnOutput(this, "WebCertificateArn", {
+      value: this.webCertificate.certificateArn,
+      exportName: `${appName}-${envName}-webCertificateArn`
+    });
+
     new cdk.CfnOutput(this, "BigDataCertificateArn", {
       value: this.bdCertificate.certificateArn,
+      exportName: `${appName}-${envName}-bdCertificateArn`
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////

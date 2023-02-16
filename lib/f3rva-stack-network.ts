@@ -9,7 +9,6 @@ import { F3RVAStackProps } from './f3rva-stack-properties';
 export class F3RVAStackNetwork extends cdk.Stack {
   // properties that can be shared to other stacks
   public readonly vpc: ec2.Vpc;
-  public readonly webEIP: ec2.CfnEIP;
 
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
@@ -22,7 +21,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create new vpc
     const vpcName = `${appName}-${envName}`;
-    const vpc = new ec2.Vpc(this, vpcName, {
+    this.vpc = new ec2.Vpc(this, vpcName, {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
       maxAzs: 2,
       natGateways: 0,
@@ -36,7 +35,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
       ]
     });
     // create a tag to name the VPC
-    cdk.Tags.of(vpc).add('Name', `${vpcName}`)
+    cdk.Tags.of(this.vpc).add('Name', `${vpcName}`)
 
     // define function that tags subnets
     const tagAllSubnets = (
@@ -52,21 +51,18 @@ export class F3RVAStackNetwork extends cdk.Stack {
     };
 
     // tag subnets
-    tagAllSubnets(vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
-
-    // assign VPC property so it is accessible in other stacks
-    this.vpc = vpc;
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////
-    // create EIPs
-    //const webEIPName = `${appName}-${envName}-web-eip`;
-    //this.webEIP = new ec2.CfnEIP(this, webEIPName, {
-    //  tags: [ new cdk.Tag("Name", webEIPName)]
-    //});
+    tagAllSubnets(this.vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
     cdk.Tags.of(this).add("APPLICATION", appName);
     cdk.Tags.of(this).add("ENVIRONMENT", envName);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // output
+    new cdk.CfnOutput(this, "vpcId", {
+      value: this.vpc.vpcId,
+      exportName: `${appName}-${envName}-vpcId`
+    });
   }
 }

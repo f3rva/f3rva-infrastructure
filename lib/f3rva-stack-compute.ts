@@ -1,9 +1,10 @@
 import * as asg from 'aws-cdk-lib/aws-autoscaling';
 import * as cdk from 'aws-cdk-lib';
+import * as cm from 'aws-cdk-lib/aws-certificatemanager'
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as fs from 'fs';
-import * as iam from 'aws-cdk-lib/aws-iam'
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -30,14 +31,17 @@ export class F3RVAStackCompute extends cdk.Stack {
     const appName = props!.appName;
     const envName = props!.envName;
     const region = props!.env!.region!;
-
     const instanceType = props!.webInstanceType!;
-    const vpc = props!.vpc!;
-    const webEIP = props!.webEIP!;
     const amiId = props!.amiId;
     const keyPair = props!.keyPair;
-    const webCertificate = props!.webCertificate!;
-    const bdCertificate = props!.bdCertificate!;
+    const vpc = props!.vpc!;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // stack inputs
+    const wpEfsFileSystemId = cdk.Fn.importValue(`${appName}-${envName}-wpEfsFileSystemId`);
+    const wpEfsSecurityGroupId = cdk.Fn.importValue(`${appName}-${envName}-wpEfsSecurityGroupId`);
+    const webCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-webCertificateArn`);
+    const bdCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-bdCertificateArn`);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Look up the AMI Id
@@ -51,8 +55,8 @@ export class F3RVAStackCompute extends cdk.Stack {
     const ec2SecurityGroupName = `${appName}-${envName}/ec2-sg`;
     const ec2SecurityGroup = new ec2.SecurityGroup(this, ec2SecurityGroupName, {
       vpc,
-      description: "Allow SSH (TCP port 22), HTTP (TCP port 80/443) in",
       allowAllOutbound: true,
+      description: "EC2 Security Group"
     });
 
     // Allow SSH access on port tcp/22
@@ -62,30 +66,22 @@ export class F3RVAStackCompute extends cdk.Stack {
       "Allow SSH Access"
     );
 
-    // Allow HTTP access on port tcp/80
-    ec2SecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(80),
-      "Allow HTTP Access"
-    );
-
-    // Allow HTTPS access on port tcp/443
-    ec2SecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(443),
-      "Allow HTTPS Access"
-    );
-
     // create a tag to name the Security Group
     cdk.Tags.of(ec2SecurityGroup).add('Name', `${ec2SecurityGroupName}`);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Update EFS security group to allow access from EC2 instances
+    const efsSecurityGroupName = `${appName}-${envName}/efs-sg`;
+    const efsSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, efsSecurityGroupName, wpEfsSecurityGroupId);
+    efsSecurityGroup.connections.allowFrom(ec2SecurityGroup, ec2.Port.tcp(2049), "Allow connections from the EC2 instances");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create alb security group
     const albSecurityGroupName = `${appName}-${envName}/alb-sg`;
     const albSecurityGroup = new ec2.SecurityGroup(this, albSecurityGroupName, {
       vpc,
-      description: "Allow HTTP (TCP port 80/443) in",
       allowAllOutbound: true,
+      description: "ALB Security Group"
     });
 
     // Allow HTTP access on port tcp/80
@@ -189,6 +185,8 @@ export class F3RVAStackCompute extends cdk.Stack {
     });
 
     // add certificate
+    const webCertificate = cm.Certificate.fromCertificateArn(this, "WebsiteCertificate", webCertificateArn);
+    const bdCertificate = cm.Certificate.fromCertificateArn(this, "BigDataCertificate", bdCertificateArn);
     httpListener.addCertificates("webCertificates", [
       webCertificate,
       bdCertificate
@@ -217,7 +215,8 @@ export class F3RVAStackCompute extends cdk.Stack {
       `export AWS_REGION=${region}`,
       `export BRANCH_NAME=${branchValue}`,
       `export ENV_NAME=${envName}`,
-      `export TAG_NAME=${tagValue}`
+      `export TAG_NAME=${tagValue}`,
+      `export WP_EFS_FS_ID=${wpEfsFileSystemId}`
     );
     autoscaling.addUserData(
       fs.readFileSync(`./scripts/bootstrap.sh`, "utf8")
@@ -225,13 +224,6 @@ export class F3RVAStackCompute extends cdk.Stack {
     autoscaling.addUserData(      
       `./setup-core.sh`
     );
-
-    // associate instance to EIP
-    // const eipAssociation = new ec2.CfnEIPAssociation(this, 'assoc', {
-    //   allocationId: webEIP.attrAllocationId,
-
-    //   instanceId: 
-    // });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
