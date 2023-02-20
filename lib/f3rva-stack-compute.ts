@@ -154,7 +154,6 @@ export class F3RVAStackCompute extends cdk.Stack {
       role: ec2Role,
       minCapacity: 1,
       maxCapacity: 1 ,
-      desiredCapacity: 1,
       vpcSubnets: {
         subnetType: ec2.SubnetType.PUBLIC
       }
@@ -180,20 +179,17 @@ export class F3RVAStackCompute extends cdk.Stack {
     });
 
     // add http listener
-    const httpListener = lb.addListener("HTTPListener", {
-      port: 443,
-    });
-
-    // add certificate
     const webCertificate = cm.Certificate.fromCertificateArn(this, "WebsiteCertificate", webCertificateArn);
     const bdCertificate = cm.Certificate.fromCertificateArn(this, "BigDataCertificate", bdCertificateArn);
-    httpListener.addCertificates("webCertificates", [
-      webCertificate,
-      bdCertificate
-    ]
-    );
+    const httpListener = lb.addListener("HTTPListener", {
+      port: 443,
+      certificates: [
+        webCertificate,
+        bdCertificate
+      ]
+    });
 
-    // route requets to ec2s
+    // route requests to ec2s
     httpListener.addTargets("Target", {
       port: 80,
       targets: [autoscaling]
