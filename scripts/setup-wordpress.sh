@@ -44,8 +44,8 @@ mkdir -p /app/${WWW_HOST}
 chown -R ec2-user:apache /app/${WWW_HOST}
 mount -t efs ${WP_EFS_FS_ID} /app/${WWW_HOST}
 
-# copy and setup wordpress
-cp -r wordpress/* /app/${WWW_HOST}
+# copy and setup wordpress - UNCOMMENT IF YOU NEED TO REBUILD WHAT IS IN EFS
+# cp -r wordpress/* /app/${WWW_HOST}
 chown -R ec2-user:apache /app/${WWW_HOST}
 chmod 2775 /app/${WWW_HOST}
 find /app/${WWW_HOST} -type d -exec sudo chmod 2775 {} \;
@@ -55,8 +55,8 @@ find /app/${WWW_HOST} -type f -exec sudo chmod 0664 {} \;
 cd /app/${WWW_HOST}
 
 # configure wordpress
-su - ec2-user
-wp plugin update akismet
-wp plugin delete hello
-wp plugin install all-in-one-wp-migration --activate
-exit
+# su - ec2-user
+# wp plugin update akismet
+# wp plugin delete hello
+# wp plugin install all-in-one-wp-migration --activate
+# exit
