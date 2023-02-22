@@ -55,8 +55,8 @@ find /app/${WWW_HOST} -type f -exec sudo chmod 0664 {} \;
 cd /app/${WWW_HOST}
 
 # configure wordpress
-su - ec2-user
-wp plugin update akismet
-wp plugin delete hello
-wp plugin install all-in-one-wp-migration --activate
-exit
+# su - ec2-user
+# wp plugin update akismet
+# wp plugin delete hello
+# wp plugin install all-in-one-wp-migration --activate
+# exit
