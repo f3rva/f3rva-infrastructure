@@ -1,5 +1,6 @@
 import * as asg from 'aws-cdk-lib/aws-autoscaling';
 import * as cdk from 'aws-cdk-lib';
+import * as cf from 'aws-cdk-lib/aws-cloudfront';
 import * as cm from 'aws-cdk-lib/aws-certificatemanager'
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2';
@@ -7,6 +8,7 @@ import * as fs from 'fs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
+import { ViewerCertificate } from 'aws-cdk-lib/aws-cloudfront';
 
 export class F3RVAStackCompute extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
@@ -35,6 +37,8 @@ export class F3RVAStackCompute extends cdk.Stack {
     const amiId = props!.amiId;
     const keyPair = props!.keyPair;
     const vpc = props!.vpc!;
+    const bdDomainName = props!.bdDomainName;
+    const webDomainName = props!.webDomainName;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // stack inputs
@@ -42,6 +46,7 @@ export class F3RVAStackCompute extends cdk.Stack {
     const wpEfsSecurityGroupId = cdk.Fn.importValue(`${appName}-${envName}-wpEfsSecurityGroupId`);
     const webCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-webCertificateArn`);
     const bdCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-bdCertificateArn`);
+    const wildcardCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-wildcardCertificateArn`);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Look up the AMI Id
@@ -64,6 +69,18 @@ export class F3RVAStackCompute extends cdk.Stack {
       ec2.Peer.anyIpv4(),
       ec2.Port.tcp(22),
       "Allow SSH Access"
+    );
+
+    ec2SecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      "Allow HTTP Access"
+    );
+
+    ec2SecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      "Allow HTTPS Access"
     );
 
     // create a tag to name the Security Group
@@ -134,92 +151,103 @@ export class F3RVAStackCompute extends cdk.Stack {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create the ec2 instance
-    // const ec2InstanceName = "webApplicationInstance";
-    // const ec2Instance = new ec2.Instance(this, ec2InstanceName, {
-    //   vpc: vpc,
-    //   instanceType: instanceType,
-    //   machineImage: ami,
-    //   securityGroup: ec2SecurityGroup,
-    //   keyName: keyPair,
-    //   role: ec2Role
-    // });
-    const autoscalingName = "asg";
-    const autoscaling = new asg.AutoScalingGroup(this, autoscalingName, {
-      vpc,
+    const ec2InstanceName = "webApplicationInstance";
+    const ec2Instance = new ec2.Instance(this, ec2InstanceName, {
+      vpc: vpc,
       instanceType: instanceType,
       machineImage: ami,
-      autoScalingGroupName: "webAutoScalingGroup",
       securityGroup: ec2SecurityGroup,
       keyName: keyPair,
-      role: ec2Role,
-      minCapacity: 1,
-      maxCapacity: 1 ,
-      vpcSubnets: {
-        subnetType: ec2.SubnetType.PUBLIC
-      }
+      role: ec2Role
     });
-    cdk.Tags.of(autoscaling).add("Name", `${appName}-${envName}-${autoscalingName}`);
+    cdk.Tags.of(ec2Instance).add("Name", `${appName}-${envName}-${ec2InstanceName}`);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // create the asg - either use this or the ec2 above
+    // const autoscalingName = "asg";
+    // const autoscaling = new asg.AutoScalingGroup(this, autoscalingName, {
+    //   vpc,
+    //   instanceType: instanceType,
+    //   machineImage: ami,
+    //   autoScalingGroupName: "webAutoScalingGroup",
+    //   securityGroup: ec2SecurityGroup,
+    //   keyName: keyPair,
+    //   role: ec2Role,
+    //   minCapacity: 1,
+    //   maxCapacity: 1 ,
+    //   vpcSubnets: {
+    //     subnetType: ec2.SubnetType.PUBLIC
+    //   }
+    // });
+    // cdk.Tags.of(autoscaling).add("Name", `${appName}-${envName}-${autoscalingName}`);
 
     // create alb
-    const lbName = "lb";
-    const lb = new elb.ApplicationLoadBalancer(this, lbName, {
-      vpc,
-      internetFacing: true,
-      loadBalancerName: `${appName}-${envName}-${lbName}`,
-      securityGroup: albSecurityGroup
-    });
-    cdk.Tags.of(lb).add("Name", `${appName}-${envName}-${lbName}`);
+    // const lbName = "lb";
+    // const lb = new elb.ApplicationLoadBalancer(this, lbName, {
+    //   vpc,
+    //   internetFacing: true,
+    //   loadBalancerName: `${appName}-${envName}-${lbName}`,
+    //   securityGroup: albSecurityGroup
+    // });
+    // cdk.Tags.of(lb).add("Name", `${appName}-${envName}-${lbName}`);
 
     // redirect 80 -> 443
-    const redirectListener = lb.addRedirect({
-      sourceProtocol: elb.ApplicationProtocol.HTTP,
-      sourcePort: 80,
-      targetProtocol: elb.ApplicationProtocol.HTTPS,
-      targetPort: 443
-    });
+    // const redirectListener = lb.addRedirect({
+    //   sourceProtocol: elb.ApplicationProtocol.HTTP,
+    //   sourcePort: 80,
+    //   targetProtocol: elb.ApplicationProtocol.HTTPS,
+    //   targetPort: 443
+    // });
 
-    // add http listener
-    const webCertificate = cm.Certificate.fromCertificateArn(this, "WebsiteCertificate", webCertificateArn);
-    const bdCertificate = cm.Certificate.fromCertificateArn(this, "BigDataCertificate", bdCertificateArn);
-    const httpListener = lb.addListener("HTTPListener", {
-      port: 443,
-      certificates: [
-        webCertificate,
-        bdCertificate
-      ]
-    });
+    // // add http listener
+    // const webCertificate = cm.Certificate.fromCertificateArn(this, "WebsiteCertificate", webCertificateArn);
+    // const bdCertificate = cm.Certificate.fromCertificateArn(this, "BigDataCertificate", bdCertificateArn);
+    // const httpListener = lb.addListener("HTTPListener", {
+    //   port: 443,
+    //   certificates: [
+    //     webCertificate,
+    //     bdCertificate
+    //   ]
+    // });
 
-    // route requests to ec2s
-    httpListener.addTargets("Target", {
-      port: 80,
-      targets: [autoscaling]
-      // healthCheck: {
-      //   path: '/ping',
-      //   interval: cdk.Duration.minutes(1),
-      // }
-    });
+    // // route requests to ec2s
+    // httpListener.addTargets("Target", {
+    //   port: 80,
+    //   targets: [autoscaling]
+    //   // healthCheck: {
+    //   //   path: '/ping',
+    //   //   interval: cdk.Duration.minutes(1),
+    //   // }
+    // });
 
-    httpListener.connections.allowDefaultPortFromAnyIpv4("Open to the world");
+    // httpListener.connections.allowDefaultPortFromAnyIpv4("Open to the world");
 
-    // configure autoscaling
-    autoscaling.scaleOnRequestCount("AModestLoad", {
-      targetRequestsPerMinute: 60,
-    });
+    // // configure autoscaling
+    // autoscaling.scaleOnRequestCount("AModestLoad", {
+    //   targetRequestsPerMinute: 60,
+    // });
     
     // add startup config
-    autoscaling.addUserData(
+    ec2Instance.addUserData(
       `export AWS_REGION=${region}`,
       `export BRANCH_NAME=${branchValue}`,
       `export ENV_NAME=${envName}`,
       `export TAG_NAME=${tagValue}`,
       `export WP_EFS_FS_ID=${wpEfsFileSystemId}`
     );
-    autoscaling.addUserData(
+    ec2Instance.addUserData(
       fs.readFileSync(`./scripts/bootstrap.sh`, "utf8")
     );
-    autoscaling.addUserData(      
+    ec2Instance.addUserData(      
       `./setup-core.sh`
     );
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // outputs
+    new cdk.CfnOutput(this, "ec2InstancePublicDNS", {
+      value: ec2Instance.instancePublicDnsName,
+      exportName: `${appName}-${envName}-ec2InstancePublicDNS`
+    });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
