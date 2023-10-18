@@ -21,7 +21,7 @@ stackProperties[devStackKey] = {
   appName: "f3rva",
   envName: "dev",
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
-  amiId: "ami-0b5eea76982371e91", // aws linux 2
+  amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
   keyPair: "f3rva-dev-wordpress-key-pair",
   bdDomainName: "devbd.f3rva.org",
   webDomainName: "dev.f3rva.org"
