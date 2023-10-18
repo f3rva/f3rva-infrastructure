@@ -239,7 +239,7 @@ export class F3RVAStackCompute extends cdk.Stack {
       fs.readFileSync(`./scripts/bootstrap.sh`, "utf8")
     );
     ec2Instance.addUserData(      
-      `./setup-core.sh`
+      //`./setup-core.sh`
     );
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
