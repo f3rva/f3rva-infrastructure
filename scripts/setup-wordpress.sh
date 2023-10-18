@@ -60,3 +60,6 @@ cd /app/${WWW_HOST}
 # wp plugin delete hello
 # wp plugin install all-in-one-wp-migration --activate
 # exit
+
+# restart after all the config is complete
+systemctl restart httpd

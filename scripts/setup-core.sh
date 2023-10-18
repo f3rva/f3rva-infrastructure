@@ -34,6 +34,3 @@ cd scripts
 
 # setup bigdata
 ./setup-bigdata.sh >> ${BOOTSTRAP_LOG} 2>&1
-
-# restart after all the config is complete
-systemctl start httpd
