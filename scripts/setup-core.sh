@@ -18,6 +18,7 @@ yum install -y amazon-efs-utils
 wget https://bootstrap.pypa.io/pip/3.6/get-pip.py -O /tmp/get-pip.py
 python3 /tmp/get-pip.py
 /usr/local/bin/pip3 install botocore
+/usr/bin/python3 -m pip install --upgrade pip
 
 cd scripts
 
@@ -33,3 +34,6 @@ cd scripts
 
 # setup bigdata
 ./setup-bigdata.sh >> ${BOOTSTRAP_LOG} 2>&1
+
+# restart after all the config is complete
+systemctl start httpd
