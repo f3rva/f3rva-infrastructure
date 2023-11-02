@@ -41,19 +41,19 @@ export class F3RVAStackDatabase extends cdk.Stack {
     // create database credentials
     const dbAdminSecret = new rds.DatabaseSecret(this, `${id}-admin-credential`, {
       username: "admin",
-      secretName: `${envName}/${appName}/dbAdminCredential`
+      secretName: `${envName}/${appName}/dbAdmin`
     });
     const dbBigDataOwnerSecret = new rds.DatabaseSecret(this, `${id}-bd-owner-credential`, {
       username: "bdOwner",
-      secretName: `${envName}/${appName}/bdOwnerCredential`
+      secretName: `${envName}/${appName}/bdOwner`
     });
     const dbBigDataAppSecret = new rds.DatabaseSecret(this, `${id}-bd-app-credential`, {
       username: "bdApp",
-      secretName: `${envName}/${appName}/bdAppCredential`
+      secretName: `${envName}/${appName}/bdApp`
     });
     const dbWebAppSecret = new rds.DatabaseSecret(this, `${id}-web-app-credential`, {
       username: "webApp",
-      secretName: `${envName}/${appName}/bdWebCredential`
+      secretName: `${envName}/${appName}/bdWeb`
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
