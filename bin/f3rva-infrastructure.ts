@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { F3RVAStackProps } from '../lib/f3rva-stack-properties';
 import { F3RVAStackNetwork } from '../lib/f3rva-stack-network';
+import { F3RVAStackDatabase } from '../lib/f3rva-stack-database';
 import { F3RVAStackStorage } from '../lib/f3rva-stack-storage';
 import { F3RVAStackCompute } from '../lib/f3rva-stack-compute';
 import { F3RVAStackCertificates } from '../lib/f3rva-stack-certificates';
@@ -20,6 +21,10 @@ stackProperties[devStackKey] = {
   env: awsAccountDevelopment,
   appName: "f3rva",
   envName: "dev",
+  databaseInstanceName: "f3rva_dev",
+  databaseInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+  bdDatabaseName: "f3rva_bd",
+  webDatabaseName: "f3rva_web",
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
   keyPair: "f3rva-dev-wordpress-key-pair",
@@ -34,6 +39,7 @@ const networkStack = new F3RVAStackNetwork(app, "F3RVA-network-dev", stackProper
 stackProperties[devStackKey].vpc = networkStack.vpc;
 const certificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", stackProperties[devStackKey]);
 const storageStack = new F3RVAStackStorage(app, "F3RVA-storage-dev", stackProperties[devStackKey]);
+const dataStack = new F3RVAStackDatabase(app, "F3RVA-database-dev", stackProperties[devStackKey]);
 const ec2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-dev", stackProperties[devStackKey]);
 const cfStack = new F3RVAStackDistribution(app, "F3RVA-distribution-dev", stackProperties[devStackKey]);
 
