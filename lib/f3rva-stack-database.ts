@@ -38,11 +38,30 @@ export class F3RVAStackDatabase extends cdk.Stack {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
+    // create database credentials
+    const dbAdminSecret = new rds.DatabaseSecret(this, `${id}-admin-credential`, {
+      username: "admin",
+      secretName: `${envName}/${appName}/dbAdminCredential`
+    });
+    const dbBigDataOwnerSecret = new rds.DatabaseSecret(this, `${id}-bd-owner-credential`, {
+      username: "bdOwner",
+      secretName: `${envName}/${appName}/bdOwnerCredential`
+    });
+    const dbBigDataAppSecret = new rds.DatabaseSecret(this, `${id}-bd-app-credential`, {
+      username: "bdApp",
+      secretName: `${envName}/${appName}/bdAppCredential`
+    });
+    const dbWebAppSecret = new rds.DatabaseSecret(this, `${id}-web-app-credential`, {
+      username: "webApp",
+      secretName: `${envName}/${appName}/bdWebCredential`
+    });
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     // create database
     const databaseInstanceName = 'web-database';
     const databaseInstance = new rds.DatabaseInstance(this, databaseInstanceName, {
       allocatedStorage: 20,
-      credentials: rds.Credentials.fromUsername('admin', { password: cdk.SecretValue.unsafePlainText('ozFD0%&7AHVi') }),
+      credentials: rds.Credentials.fromSecret(dbAdminSecret),
       databaseName: instanceName,
       engine: rds.DatabaseInstanceEngine.MYSQL,
       instanceType: instanceType,

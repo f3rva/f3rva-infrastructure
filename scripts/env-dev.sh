@@ -4,7 +4,7 @@
 export ADMIN_EMAIL=admin@f3rva.org
 
 # database settings
-export DB_SECRET_KEY=dev/F3RVAWeb/mysql
+export DB_SECRET_KEY=dev/d3rva/dbAdminCredential
 
 # apache environment
 export WWW_HOST=dev.f3rva.org
