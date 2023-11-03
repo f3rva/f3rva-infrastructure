@@ -28,8 +28,9 @@ stackProperties[devStackKey] = {
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
   keyPair: "f3rva-dev-wordpress-key-pair",
-  bdDomainName: "devbd.f3rva.org",
-  webDomainName: "dev.f3rva.org"
+  hostedZone: "dev.f3rva.org",
+  bdDomainName: "bigdata.dev.f3rva.org",
+  webDomainName: "web.dev.f3rva.org"
 }
 
 const app = new cdk.App();
