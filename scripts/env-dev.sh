@@ -4,14 +4,11 @@
 export ADMIN_EMAIL=admin@f3rva.org
 
 # database settings
-export DB_NAME=wpdev
-export DB_USER=wpdev
-export DB_PASSWORD=A5FYGnH1ZTlY
-export DB_HOST=107.180.58.52
+export DB_SECRET_KEY=dev/f3rva/dbAdmin
 
 # apache environment
-export WWW_HOST=dev.f3rva.org
-export BIGDATA_HOST=devbd.f3rva.org
+export WWW_HOST=web.dev.f3rva.org
+export BIGDATA_HOST=bigdata.dev.f3rva.org
 
 # wordpress settings
 export SITE_TITLE=F3RVA

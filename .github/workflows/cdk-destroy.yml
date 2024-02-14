@@ -1,28 +1,28 @@
-name: F3RVA Infrastructure Deploy
+name: F3RVA Infrastructure Destroy
 
 on:
   workflow_dispatch:
     inputs:
       env: 
-        description: "Environment to deploy"
+        description: "Environment to destroy"
         required: true
         type: environment
       stack:
-        description: "Stack to deploy"
+        description: "Stack to destroy"
         required: true
         type: choice
         options: 
         - network
         - wordpress
       release: 
-        description: "Release to deploy"
+        description: "Release to use as basis"
         required: true
         type: string
         default: "vx.x.x"
 
 jobs:
-  deploy_stack:
-    name: Deploy stack
+  destroy_stack:
+    name: Destroy stack
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.env }}
     steps:
@@ -51,8 +51,5 @@ jobs:
     - name: Install dependencies
       run: npm install
 
-    - name: Diff definition to currently deployed stack
-      run: npm run cdk diff F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }}
-
     - name: Deploy stack
-      run: npm run cdk deploy F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }} --require-approval never
+      run: npm run cdk destroy F3RVA-${{ github.event.inputs.stack }}-${{ vars.KEY }} --require-approval never

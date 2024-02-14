@@ -1,8 +1,12 @@
 TAGS_BASE=https://github.com/f3rva/f3rva-infrastructure/releases/download
 BRANCH_BASE=https://raw.githubusercontent.com/f3rva/f3rva-infrastructure
 
+# create app directory
+mkdir /app
+chown ec2-user:apache /app
+
 # create a working directory
-mkdir -p /app/bootstrap
+mkdir /app/bootstrap
 cd /app/bootstrap
 
 # if tag is not empty, use it, otherwise check for branch name
@@ -28,13 +32,15 @@ elif [[ ! -z ${BRANCH_NAME} ]]; then
 
   wget ${SCRIPTS_ROOT}/env.sh
   wget ${SCRIPTS_ROOT}/env-${ENV_NAME}.sh
+  wget ${SCRIPTS_ROOT}/setup-bigdata.sh
   wget ${SCRIPTS_ROOT}/setup-core.sh
   wget ${SCRIPTS_ROOT}/setup-httpd.sh
   wget ${SCRIPTS_ROOT}/setup-wordpress.sh
 
   CONF_ROOT=${BRANCH_BASE}/${BRANCH_NAME}/conf
   cd ../conf
-  wget ${CONF_ROOT}/website-${ENV_NAME}.f3rva.org.conf
+  wget ${CONF_ROOT}/website-${ENV_NAME}-site.f3rva.org.conf
+  wget ${CONF_ROOT}/website-${ENV_NAME}-bd.f3rva.org.conf
   
   cd ..
 else

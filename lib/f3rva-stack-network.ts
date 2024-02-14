@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
-import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -9,32 +10,39 @@ import { F3RVAStackProps } from './f3rva-stack-properties';
 export class F3RVAStackNetwork extends cdk.Stack {
   // properties that can be shared to other stacks
   public readonly vpc: ec2.Vpc;
-  public readonly securityGroup: ec2.SecurityGroup;
 
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     // stack props
     const appName = props!.appName;
     const envName = props!.envName;
+    const hostedZoneDomain = props!.hostedZone;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////
     // create new vpc
     const vpcName = `${appName}-${envName}`;
-    const vpc = new ec2.Vpc(this, vpcName, {
+    this.vpc = new ec2.Vpc(this, vpcName, {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
-      maxAzs: 1,
+      maxAzs: 2,
       natGateways: 0,
       
       subnetConfiguration: [
         {
-          cidrMask: 24,
+          cidrMask: 25,
           name: "public",
           subnetType: ec2.SubnetType.PUBLIC
+        },
+        {
+          cidrMask: 25,
+          name: "restricted",
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED
         }
       ]
     });
     // create a tag to name the VPC
-    cdk.Tags.of(vpc).add('Name', `${vpcName}`)
+    cdk.Tags.of(this.vpc).add('Name', `${vpcName}`)
 
     // define function that tags subnets
     const tagAllSubnets = (
@@ -49,50 +57,32 @@ export class F3RVAStackNetwork extends cdk.Stack {
       }
     };
 
-    // tag public subnets
-    tagAllSubnets(vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
-    tagAllSubnets(vpc.publicSubnets, 'Environment', `${envName}`, false);
+    // tag subnets
+    tagAllSubnets(this.vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
+    tagAllSubnets(this.vpc.isolatedSubnets, 'Name', `${vpcName}/restricted`, true);
 
-    // assign VPC property so it is accessible in other stacks
-    this.vpc = vpc;
-
-    // create security group
-    const securityGroupName = `${appName}-${envName}/security-group`;
-    this.securityGroup = new ec2.SecurityGroup(this, securityGroupName, {
-      vpc,
-      description: "Allow SSH (TCP port 22), HTTP (TCP port 80/443), Database (TCP port 3306) in",
-      allowAllOutbound: true,
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // create route 53 hosted zone
+    const hostedZoneName = `${appName}-${envName}-hostedZone`;
+    const hostedZone = new route53.HostedZone(this, hostedZoneName, {
+      zoneName: hostedZoneDomain,
     });
 
-    // Allow SSH access on port tcp/22
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(22),
-      "Allow SSH Access"
-    );
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // tag to all resources created by this stack
+    cdk.Tags.of(this).add("APPLICATION", appName);
+    cdk.Tags.of(this).add("ENVIRONMENT", envName);
 
-    // Allow HTTP access on port tcp/80
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(80),
-      "Allow HTTP Access"
-    );
+    ///////////////////////////////////////////////////////////////////////////
+    // output
+    new cdk.CfnOutput(this, "vpcId", {
+      value: this.vpc.vpcId,
+      exportName: `${appName}-${envName}-vpcId`
+    });
 
-    // Allow HTTPS access on port tcp/443
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(443),
-      "Allow HTTPS Access"
-    );
-
-    // Allow Database access on port tcp/3306
-    this.securityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(3306),
-      "Allow Database Access"
-    );
-
-    // create a tag to name the Security Group
-    cdk.Tags.of(this.securityGroup).add('Name', `${securityGroupName}`)
+    new cdk.CfnOutput(this, "hostedZoneId", {
+      value: hostedZone.hostedZoneId,
+      exportName: `${appName}-${envName}-hostedZoneId`
+    });
   }
 }
