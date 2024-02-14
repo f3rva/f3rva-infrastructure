@@ -12,6 +12,7 @@ export interface F3RVAStackProps extends cdk.StackProps {
     vpc?: ec2.Vpc,
     amiId: string,
     keyPair: string,
+    hostedZone: string,
     bdDomainName: string,
     webDomainName: string
 }
