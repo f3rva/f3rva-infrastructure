@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
-import * as ec2 from "aws-cdk-lib/aws-ec2";
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -17,6 +18,7 @@ export class F3RVAStackNetwork extends cdk.Stack {
     // stack props
     const appName = props!.appName;
     const envName = props!.envName;
+    const hostedZoneDomain = props!.hostedZone;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create new vpc
@@ -28,9 +30,14 @@ export class F3RVAStackNetwork extends cdk.Stack {
       
       subnetConfiguration: [
         {
-          cidrMask: 24,
+          cidrMask: 25,
           name: "public",
           subnetType: ec2.SubnetType.PUBLIC
+        },
+        {
+          cidrMask: 25,
+          name: "restricted",
+          subnetType: ec2.SubnetType.PRIVATE_ISOLATED
         }
       ]
     });
@@ -52,6 +59,14 @@ export class F3RVAStackNetwork extends cdk.Stack {
 
     // tag subnets
     tagAllSubnets(this.vpc.publicSubnets, 'Name', `${vpcName}/public`, true);
+    tagAllSubnets(this.vpc.isolatedSubnets, 'Name', `${vpcName}/restricted`, true);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // create route 53 hosted zone
+    const hostedZoneName = `${appName}-${envName}-hostedZone`;
+    const hostedZone = new route53.HostedZone(this, hostedZoneName, {
+      zoneName: hostedZoneDomain,
+    });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
@@ -63,6 +78,11 @@ export class F3RVAStackNetwork extends cdk.Stack {
     new cdk.CfnOutput(this, "vpcId", {
       value: this.vpc.vpcId,
       exportName: `${appName}-${envName}-vpcId`
+    });
+
+    new cdk.CfnOutput(this, "hostedZoneId", {
+      value: hostedZone.hostedZoneId,
+      exportName: `${appName}-${envName}-hostedZoneId`
     });
   }
 }
