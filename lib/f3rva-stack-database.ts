@@ -19,22 +19,15 @@ export class F3RVAStackDatabase extends cdk.Stack {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create database security group
-    const dbSecurityGroupName = `${appName}-${envName}/db-sg`;
-    const dbSecurityGroup = new ec2.SecurityGroup(this, dbSecurityGroupName, {
+    const rdsSecurityGroupName = `${appName}-${envName}/rds-sg`;
+    const rdsSecurityGroup = new ec2.SecurityGroup(this, rdsSecurityGroupName, {
       vpc,
       allowAllOutbound: true,
       description: "Database Security Group"
     });
 
-    // Allow HTTP access on port tcp/80
-    dbSecurityGroup.addIngressRule(
-      ec2.Peer.anyIpv4(),
-      ec2.Port.tcp(3306),
-      "Allow MYSQL Access"
-    );
-
     // create a tag to name the Security Group
-    cdk.Tags.of(dbSecurityGroup).add('Name', `${dbSecurityGroupName}`);
+    cdk.Tags.of(rdsSecurityGroup).add('Name', `${rdsSecurityGroupName}`);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -69,17 +62,27 @@ export class F3RVAStackDatabase extends cdk.Stack {
       preferredBackupWindow: '06:00-07:00', // in UTC
       preferredMaintenanceWindow: 'sun:07:00-sun:08:00', // in UTC
       publiclyAccessible: true,
-      securityGroups: [dbSecurityGroup],
+      securityGroups: [rdsSecurityGroup],
       vpc,
-      vpcSubnets: { subnets: vpc.publicSubnets }
+      vpcSubnets: { subnets: vpc.isolatedSubnets }
     });
     cdk.Tags.of(databaseInstance).add("Name", `${appName}-${envName}-${databaseInstanceName}`);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // tag to all resources created by this stack
+    cdk.Tags.of(this).add("APPLICATION", appName);
+    cdk.Tags.of(this).add("ENVIRONMENT", envName);
 
     ///////////////////////////////////////////////////////////////////////////
     // outputs
     new cdk.CfnOutput(this, 'databaseId', {
       value: databaseInstance.instanceIdentifier,
       exportName: `${appName}-${envName}-webDatabaseId`
+    });
+
+    new cdk.CfnOutput(this, 'rdsSecurityGroupId', {
+      value: rdsSecurityGroup.securityGroupId,
+      exportName: `${appName}-${envName}-rdsSecurityGroupId`
     });
   }
 }
