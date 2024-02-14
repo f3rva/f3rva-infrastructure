@@ -1,7 +1,7 @@
 import * as asg from 'aws-cdk-lib/aws-autoscaling';
 import * as cdk from 'aws-cdk-lib';
 import * as cf from 'aws-cdk-lib/aws-cloudfront';
-import * as cm from 'aws-cdk-lib/aws-certificatemanager'
+import * as cm from 'aws-cdk-lib/aws-certificatemanager';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as elb from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as fs from 'fs';
@@ -44,6 +44,7 @@ export class F3RVAStackCompute extends cdk.Stack {
     // stack inputs
     const wpEfsFileSystemId = cdk.Fn.importValue(`${appName}-${envName}-wpEfsFileSystemId`);
     const wpEfsSecurityGroupId = cdk.Fn.importValue(`${appName}-${envName}-wpEfsSecurityGroupId`);
+    const rdsSecurityGroupId = cdk.Fn.importValue(`${appName}-${envName}-rdsSecurityGroupId`);
     const webCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-webCertificateArn`);
     const bdCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-bdCertificateArn`);
     const wildcardCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-wildcardCertificateArn`);
@@ -91,6 +92,12 @@ export class F3RVAStackCompute extends cdk.Stack {
     const efsSecurityGroupName = `${appName}-${envName}/efs-sg`;
     const efsSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, efsSecurityGroupName, wpEfsSecurityGroupId);
     efsSecurityGroup.connections.allowFrom(ec2SecurityGroup, ec2.Port.tcp(2049), "Allow connections from the EC2 instances");
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Update RDS security group to allow access from EC2 instances
+    const rdsSecurityGroupName = `${appName}-${envName}/rds-sg`;
+    const rdsSecurityGroup = ec2.SecurityGroup.fromSecurityGroupId(this, rdsSecurityGroupName, rdsSecurityGroupId);
+    rdsSecurityGroup.connections.allowFrom(ec2SecurityGroup, ec2.Port.tcp(3306), "Allow connections from the EC2 instances");
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create alb security group
@@ -153,12 +160,13 @@ export class F3RVAStackCompute extends cdk.Stack {
     // create the ec2 instance
     const ec2InstanceName = "webApplicationInstance";
     const ec2Instance = new ec2.Instance(this, ec2InstanceName, {
-      vpc: vpc,
       instanceType: instanceType,
-      machineImage: ami,
-      securityGroup: ec2SecurityGroup,
       keyName: keyPair,
-      role: ec2Role
+      machineImage: ami,
+      role: ec2Role,
+      securityGroup: ec2SecurityGroup,
+      vpc: vpc,
+      vpcSubnets: { subnets: vpc.publicSubnets }
     });
     cdk.Tags.of(ec2Instance).add("Name", `${appName}-${envName}-${ec2InstanceName}`);
 
