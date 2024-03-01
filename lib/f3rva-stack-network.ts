@@ -18,7 +18,6 @@ export class F3RVAStackNetwork extends cdk.Stack {
     // stack props
     const appName = props!.appName;
     const envName = props!.envName;
-    const hostedZoneDomain = props!.hostedZone;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create new vpc
@@ -62,13 +61,6 @@ export class F3RVAStackNetwork extends cdk.Stack {
     tagAllSubnets(this.vpc.isolatedSubnets, 'Name', `${vpcName}/restricted`, true);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    // create route 53 hosted zone
-    const hostedZoneName = `${appName}-${envName}-hostedZone`;
-    const hostedZone = new route53.HostedZone(this, hostedZoneName, {
-      zoneName: hostedZoneDomain,
-    });
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
     cdk.Tags.of(this).add("APPLICATION", appName);
     cdk.Tags.of(this).add("ENVIRONMENT", envName);
@@ -78,11 +70,6 @@ export class F3RVAStackNetwork extends cdk.Stack {
     new cdk.CfnOutput(this, "vpcId", {
       value: this.vpc.vpcId,
       exportName: `${appName}-${envName}-vpcId`
-    });
-
-    new cdk.CfnOutput(this, "hostedZoneId", {
-      value: hostedZone.hostedZoneId,
-      exportName: `${appName}-${envName}-hostedZoneId`
     });
   }
 }

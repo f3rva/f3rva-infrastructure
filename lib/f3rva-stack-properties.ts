@@ -1,9 +1,12 @@
 import * as cdk from 'aws-cdk-lib'
 import * as ec2 from 'aws-cdk-lib/aws-ec2'
 
-export interface F3RVAStackProps extends cdk.StackProps {
+export interface F3RVAStackBaseProps extends cdk.StackProps { 
     appName: 'f3rva',
-    envName: 'dev' | 'prod',
+    envName: 'dev' | 'prod'
+}
+
+export interface F3RVAStackProps extends F3RVAStackBaseProps {
     databaseInstanceName: string,
     databaseInstanceType: ec2.InstanceType,
     bdDatabaseName: string,
@@ -12,7 +15,11 @@ export interface F3RVAStackProps extends cdk.StackProps {
     vpc?: ec2.Vpc,
     amiId: string,
     keyPair: string,
-    hostedZone: string,
     bdDomainName: string,
     webDomainName: string
+}
+
+export interface F3RVAStackDNSProps extends F3RVAStackBaseProps {
+    hostedZones: string[],
+    inboundSMTP: string
 }
