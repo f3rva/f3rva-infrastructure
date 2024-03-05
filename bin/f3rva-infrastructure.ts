@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { F3RVAStackProps, F3RVAStackDNSProps } from '../lib/f3rva-stack-properties';
 import { F3RVAStackDNS } from '../lib/f3rva-stack-dns';
+import { F3RVAStackEmail } from '../lib/f3rva-stack-email';
 import { F3RVAStackNetwork } from '../lib/f3rva-stack-network';
 import { F3RVAStackDatabase } from '../lib/f3rva-stack-database';
 import { F3RVAStackStorage } from '../lib/f3rva-stack-storage';
@@ -56,6 +57,9 @@ const devStackProperties: F3RVAStackProps = {
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
   keyPair: "f3rva-dev-wordpress-key-pair",
+  adminEmailSource: "admin@dev.f3rva.org",
+  adminEmailDestination: "f3rva.corporate.dev@gmail.com",
+  baseDomain: "dev.f3rva.org",
   bdDomainName: "bigdata.dev.f3rva.org",
   webDomainName: "web.dev.f3rva.org"
 }
@@ -71,6 +75,9 @@ const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = {
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
   keyPair: "f3rva-prod-wordpress-key-pair",
+  adminEmailSource: "admin@f3rva.org",
+  adminEmailDestination: "f3rva.corporate.prod@gmail.com",
+  baseDomain: "f3rva.org",
   bdDomainName: "bigdata.f3rva.org",
   webDomainName: "f3rva.org"
 }
@@ -90,6 +97,7 @@ const devLambdaStack = new F3RVAStackLambda(app, "F3RVA-lambda-dev", devStackPro
 
 // prod stack
 const prodDnsStack = new F3RVAStackDNS(app, "F3RVA-dns-prod", prodStackDNSProperties);
+const prodEmailStack = new F3RVAStackEmail(app, "F3RVA-email-prod", prodStackProperties);
 const prodNetworkStack = new F3RVAStackNetwork(app, "F3RVA-network-prod", prodStackProperties);
 prodStackProperties.vpc = prodNetworkStack.vpc;
 const prodCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-prod", prodStackProperties);
