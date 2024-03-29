@@ -3,8 +3,9 @@ import boto3
 import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-import json
 from email.policy import default as default_policy
+import json
+import os
 
 def get_value_from_header(headers, key):
   value = None
@@ -18,6 +19,7 @@ def get_value_from_header(headers, key):
 def lambda_handler(event, context):
   # Get the SNS message body
   incoming_message = event['Records'][0]['Sns']['Message']
+  recipient = os.environ.get('EMAIL_DESTINATION')
   
   # Parse the JSON message
   message_data = json.loads(incoming_message)
@@ -35,13 +37,9 @@ def lambda_handler(event, context):
   decoded_content = base64.b64decode(message_data['content'])
   raw_email = email.message_from_bytes(decoded_content, policy=default_policy)
   body = raw_email.get_body(preferencelist=('html', 'body'))
-  charset = body.get_content_charset()
 
   # forward the email out  
   try:
-    # Replace with your sender and recipient email addresses
-    recipient = 'bbischoff78@gmail.com'
-    
     # Create the new email content
     new_email_subject = f"[Forwarded from {sender} to {receiver}] {subject}"
 
