@@ -98,7 +98,7 @@ export class F3RVAStackEmail extends cdk.Stack {
     const forwardEmailLambdaName = `${appName}-${envName}/forwardEmailFromSES`;
     const forwardEmailLambda = new lambda.Function(this, forwardEmailLambdaName, {
       environment: {
-        TOPIC_ARN: emailReceivingTopic.topicArn
+        EMAIL_DESTINATION: adminEmailDestination
       },
       code: lambda.Code.fromAsset("src/api/email/forward"),
       handler: 'forward.lambda_handler',

@@ -56,7 +56,7 @@ const devStackProperties: F3RVAStackProps = {
   webDatabaseName: webDatabaseName,
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
-  keyPair: "f3rva-dev-wordpress-key-pair",
+  keyPairName: "f3rva-dev-wordpress-key-pair",
   adminEmailSource: "admin@dev.f3rva.org",
   adminEmailDestination: "f3rva.corporate.dev@gmail.com",
   baseDomain: "dev.f3rva.org",
@@ -74,7 +74,7 @@ const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = {
   webDatabaseName: webDatabaseName,
   webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
   amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
-  keyPair: "f3rva-prod-wordpress-key-pair",
+  keyPairName: "f3rva-prod-wordpress-key-pair",
   adminEmailSource: "admin@f3rva.org",
   adminEmailDestination: "f3rva.corporate.prod@gmail.com",
   baseDomain: "f3rva.org",
@@ -101,7 +101,7 @@ const prodEmailStack = new F3RVAStackEmail(app, "F3RVA-email-prod", prodStackPro
 const prodNetworkStack = new F3RVAStackNetwork(app, "F3RVA-network-prod", prodStackProperties);
 prodStackProperties.vpc = prodNetworkStack.vpc;
 const prodCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-prod", prodStackProperties);
-const prodtorageStack = new F3RVAStackStorage(app, "F3RVA-storage-prod", prodStackProperties);
+const prodStorageStack = new F3RVAStackStorage(app, "F3RVA-storage-prod", prodStackProperties);
 const prodDataStack = new F3RVAStackDatabase(app, "F3RVA-database-prod", prodStackProperties);
 const prodEc2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-prod", prodStackProperties);
 const prodCfStack = new F3RVAStackDistribution(app, "F3RVA-distribution-prod", prodStackProperties);

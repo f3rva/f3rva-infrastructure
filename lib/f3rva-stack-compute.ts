@@ -35,7 +35,7 @@ export class F3RVAStackCompute extends cdk.Stack {
     const region = props!.env!.region!;
     const instanceType = props!.webInstanceType!;
     const amiId = props!.amiId;
-    const keyPair = props!.keyPair;
+    const keyPairName = props!.keyPairName;
     const vpc = props!.vpc!;
     const bdDomainName = props!.bdDomainName;
     const webDomainName = props!.webDomainName;
@@ -156,12 +156,15 @@ export class F3RVAStackCompute extends cdk.Stack {
     ec2Role.addManagedPolicy(webApplicationPolicy);
     cdk.Tags.of(ec2Role).add("Name", `${appName}-${envName}-${ec2RoleName}`);
 
+    // lookup the key pair
+    const keyPair = ec2.KeyPair.fromKeyPairName(this, "KeyPair", keyPairName);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // create the ec2 instance
     const ec2InstanceName = "webApplicationInstance";
     const ec2Instance = new ec2.Instance(this, ec2InstanceName, {
       instanceType: instanceType,
-      keyName: keyPair,
+      keyPair: keyPair,
       machineImage: ami,
       role: ec2Role,
       securityGroup: ec2SecurityGroup,
@@ -179,7 +182,7 @@ export class F3RVAStackCompute extends cdk.Stack {
     //   machineImage: ami,
     //   autoScalingGroupName: "webAutoScalingGroup",
     //   securityGroup: ec2SecurityGroup,
-    //   keyName: keyPair,
+    //   keyPair: keyPair,
     //   role: ec2Role,
     //   minCapacity: 1,
     //   maxCapacity: 1 ,

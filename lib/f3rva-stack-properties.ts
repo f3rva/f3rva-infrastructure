@@ -14,7 +14,7 @@ export interface F3RVAStackProps extends F3RVAStackBaseProps {
     webInstanceType: ec2.InstanceType,
     vpc?: ec2.Vpc,
     amiId: string,
-    keyPair: string,
+    keyPairName: string,
     adminEmailSource: string,
     adminEmailDestination: string,
     baseDomain: string,
