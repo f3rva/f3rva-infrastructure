@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cm from 'aws-cdk-lib/aws-certificatemanager'
+import * as route53 from 'aws-cdk-lib/aws-route53';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -16,21 +17,27 @@ export class F3RVAStackCertificates extends cdk.Stack {
     // stack props
     const appName = props!.appName;
     const envName = props!.envName;
+    const baseDomain = props!.baseDomain;
+    const wildcardDomainName = "*." + baseDomain;
     const bdDomainName = props!.bdDomainName;
     const webDomainName = props!.webDomainName;
-    const wildcardDomainName = "*.f3rva.org";
     
+    ////////////////////////////////////////////////////////////////////////////////////////////////    
+    // lookup the hosteed zone
+    const hostedZoneName = `${appName}-${envName}-${baseDomain}-hostedZone`;
+    const hostedZone = route53.HostedZone.fromLookup(this, hostedZoneName, {
+      domainName: baseDomain, // or the domain name of your hosted zone
+    });
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // wildcard certificate
-    this.wildcardCertificate = new cm.Certificate(this, "WebsiteCertificate", {
+    this.wildcardCertificate = new cm.Certificate(this, "WildcardCertificate", {
       domainName: wildcardDomainName,
       subjectAlternativeNames: [
-        "f3rva.org"
+        baseDomain
       ],
-      certificateName: `${appName}-${envName}-wildcardCert`
-      // validation: cm.CertificateValidation.fromEmail({
-      //   "*.f3rva.org": wildcardDomainName
-      // })
+      certificateName: `${appName}-${envName}-wildcardCert`,
+      validation: cm.CertificateValidation.fromDns(hostedZone)
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
