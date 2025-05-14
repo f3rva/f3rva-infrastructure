@@ -86,6 +86,7 @@ const app = new cdk.App();
 
 // dev stack
 const devDnsStack = new F3RVAStackDNS(app, "F3RVA-dns-dev", devStackDNSProperties);
+const devEmailStack = new F3RVAStackEmail(app, "F3RVA-email-dev", devStackProperties);
 const devNetworkStack = new F3RVAStackNetwork(app, "F3RVA-network-dev", devStackProperties);
 devStackProperties.vpc = devNetworkStack.vpc;
 const devCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", devStackProperties);
