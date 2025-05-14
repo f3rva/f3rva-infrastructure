@@ -22,5 +22,9 @@
     "us-east-1d",
     "us-east-1e",
     "us-east-1f"
-  ]
+  ],
+  "hosted-zone:account=590183876163:domainName=dev.f3rva.org:region=us-east-1": {
+    "Id": "/hostedzone/Z02207232KV0K9048JN8B",
+    "Name": "dev.f3rva.org."
+  }
 }
