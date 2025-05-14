@@ -29,6 +29,7 @@ def lambda_handler(event, context):
   sender = get_value_from_header(headers, 'From')
   receiver = get_value_from_header(headers, 'To')
   subject = get_value_from_header(headers, 'Subject')
+  print(f"Inbound message")
   print(f"From: {sender}")
   print(f"To: {receiver}")
   print(f"Subject: {subject}")
