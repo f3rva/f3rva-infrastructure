@@ -53,3 +53,9 @@ This stack creates the baseline certificates needed for each domain.  The wildca
 ### Storage
 This stack creates the filesystem needs for the environment.  Wordpress requires persistent storage to be maintained across stack recreation so we will manage this in EFS.
 
+### EC2
+A prerequisite for creating the EC2s is to create a key pair to allow SSH access after creation.  Use the following command to create the key pair via the CLI, this outputs the private key which you will have to save in a .pem file.  If you don't save it, you will have to create a new key pair.
+
+* `aws ec2 create-key-pair --key-name f3rva-dev-wordpress-key-pair --key-type rsa --key-format pem --region us-east-1 --profile f3rva-dev`
+* save it in a .pem file
+* `chmod 400 *.pem`
