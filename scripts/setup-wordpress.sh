@@ -36,16 +36,22 @@ if [ ! -f /app/${WWW_HOST}/wp-config.php ]; then
     sed -i -e "s/'DB_PASSWORD', 'password_here'/'DB_PASSWORD', '${DB_PASSWORD}'/g" wordpress/wp-config.php
     sed -i -e "s/'DB_HOST', 'localhost'/'DB_HOST', '${DB_HOST}'/g" wordpress/wp-config.php
 
+    echo "Replacing placeholder salts"
+
     # regenerate and replace placeholder salts
     curl https://api.wordpress.org/secret-key/1.1/salt/ >> salt.txt
     sed -i -e "/NONCE_SALT/r salt.txt" wordpress/wp-config.php
     sed -i -e "/put your unique phrase here/d" wordpress/wp-config.php
+
+    echo "fixing FTP prompts on plugin uploads"
 
     # fix FTP prompts on plugin uploads
     echo "" >> wordpress/wp-config.php
     echo "# fix FTP prompts on plugin uploads" >> wordpress/wp-config.php
     echo "define('FS_METHOD','direct');" >> wordpress/wp-config.php
     echo "" >> wordpress/wp-config.php
+
+    echo "copying wordpress files"
 
     # copy and setup wordpress - UNCOMMENT IF YOU NEED TO REBUILD WHAT IS IN EFS
     cp -r wordpress/* /app/${WWW_HOST}
@@ -54,8 +60,12 @@ if [ ! -f /app/${WWW_HOST}/wp-config.php ]; then
     find /app/${WWW_HOST} -type d -exec sudo chmod 2775 {} \;
     find /app/${WWW_HOST} -type f -exec sudo chmod 0664 {} \;
 
+    echo "running setup"
+
     # run setup
     cd /app/${WWW_HOST}
+
+    echo "configuring wordpress"
 
     # configure wordpress
     su - ec2-user
