@@ -48,6 +48,7 @@ const prodStackDNSProperties: F3RVAStackDNSProps = {
 
 const devStackProperties: F3RVAStackProps = { 
   env: awsAccountDevelopment,
+  dns: devStackDNSProperties,
   appName: appName,
   envName: "dev",
   databaseInstanceName: "f3rva_dev",
@@ -66,6 +67,7 @@ const devStackProperties: F3RVAStackProps = {
 
 const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = { 
   env: awsAccountProduction,
+  dns: prodStackDNSProperties,
   appName: appName,
   envName: "prod",
   databaseInstanceName: "f3rva_prod",
