@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # global
-export ADMIN_EMAIL=admin@f3rva.org
+export ADMIN_EMAIL=admin@dev.f3rva.org
 
 # database settings
 export DB_SECRET_KEY=dev/f3rva/dbAdmin
 
 # apache environment
-export WWW_HOST=web.dev.f3rva.org
+export WWW_HOST=dev.f3rva.org
 export BIGDATA_HOST=bigdata.dev.f3rva.org
 
 # wordpress settings
