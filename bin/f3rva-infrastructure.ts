@@ -61,7 +61,7 @@ const devStackProperties: F3RVAStackProps = {
   adminEmailDestination: "f3rva.corporate.dev@gmail.com",
   baseDomain: "dev.f3rva.org",
   bdDomainName: "bigdata.dev.f3rva.org",
-  webDomainName: "web.dev.f3rva.org"
+  webDomainName: "dev.f3rva.org"
 }
 
 const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = { 
