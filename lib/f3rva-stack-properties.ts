@@ -7,6 +7,7 @@ export interface F3RVAStackBaseProps extends cdk.StackProps {
 }
 
 export interface F3RVAStackProps extends F3RVAStackBaseProps {
+    dns: F3RVAStackDNSProps
     databaseInstanceName: string,
     databaseInstanceType: ec2.InstanceType,
     bdDatabaseName: string,
