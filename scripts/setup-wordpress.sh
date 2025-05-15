@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # setup wordpress CLI and make it executable
+echo "installing wordpress CLI"
 mkdir ${APP_DIR}/wp-cli
 cd ${APP_DIR}/wp-cli
 wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
@@ -9,6 +10,7 @@ chown ec2-user:apache wp-cli.phar
 ln -s ${APP_DIR}/wp-cli/wp-cli.phar /usr/local/bin/wp
 
 # create mount point and mount the EFS filesystem
+echo "mounting EFS filesystem"
 mkdir -p /app/${WWW_HOST}
 chown -R ec2-user:apache /app/${WWW_HOST}
 mount -t efs ${WP_EFS_FS_ID} /app/${WWW_HOST}
@@ -17,6 +19,7 @@ mount -t efs ${WP_EFS_FS_ID} /app/${WWW_HOST}
 if [ ! -f /app/${WWW_HOST}/wp-config.php ]; then
 
     # download wordpress
+    echo "rebuiding wordpress as it doesn't exist in EFS"
     mkdir ${BOOTSTRAP_DIR}/wordpress
     cd ${BOOTSTRAP_DIR}/wordpress
 
@@ -36,42 +39,38 @@ if [ ! -f /app/${WWW_HOST}/wp-config.php ]; then
     sed -i -e "s/'DB_PASSWORD', 'password_here'/'DB_PASSWORD', '${DB_PASSWORD}'/g" wordpress/wp-config.php
     sed -i -e "s/'DB_HOST', 'localhost'/'DB_HOST', '${DB_HOST}'/g" wordpress/wp-config.php
 
-    echo "Replacing placeholder salts"
-
     # regenerate and replace placeholder salts
+    echo "Replacing placeholder salts"
     curl https://api.wordpress.org/secret-key/1.1/salt/ >> salt.txt
     sed -i -e "/NONCE_SALT/r salt.txt" wordpress/wp-config.php
     sed -i -e "/put your unique phrase here/d" wordpress/wp-config.php
 
-    echo "fixing FTP prompts on plugin uploads"
-
     # fix FTP prompts on plugin uploads
+    echo "fixing FTP prompts on plugin uploads"
     echo "" >> wordpress/wp-config.php
     echo "# fix FTP prompts on plugin uploads" >> wordpress/wp-config.php
     echo "define('FS_METHOD','direct');" >> wordpress/wp-config.php
     echo "" >> wordpress/wp-config.php
 
-    echo "copying wordpress files"
-
     # copy and setup wordpress - UNCOMMENT IF YOU NEED TO REBUILD WHAT IS IN EFS
+    echo "copying wordpress files"
     cp -r wordpress/* /app/${WWW_HOST}
     chown -R ec2-user:apache /app/${WWW_HOST}
     chmod 2775 /app/${WWW_HOST}
     find /app/${WWW_HOST} -type d -exec sudo chmod 2775 {} \;
     find /app/${WWW_HOST} -type f -exec sudo chmod 0664 {} \;
 
-    echo "running setup"
-
     # run setup
+    echo "running setup"
     cd /app/${WWW_HOST}
 
-    echo "configuring wordpress"
-
     # configure wordpress
-    su - ec2-user
-    wp plugin delete hello
-    exit
+    echo "configuring wordpress"
+    #sudo -u ec2-user -i -- wp core install --url=${WP_URL} --title="${WP_TITLE}" --admin_user=${WP_ADMIN_USER} --admin_password=${WP_ADMIN_PASSWORD} --admin_email=${ADMIN_EMAIL} --skip-email
+    #sudo -u ec2-user -i -- wp plugin delete hello
 fi
 
 # restart after all the config is complete
 systemctl restart httpd
+
+echo "setup wordpress complete"
