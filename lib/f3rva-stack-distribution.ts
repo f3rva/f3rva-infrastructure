@@ -38,8 +38,9 @@ export class F3RVAStackDistribution extends cdk.Stack {
           originSslProtocols: [
             cf.OriginSslPolicy.TLS_V1_2
           ],
-          protocolPolicy: cf.OriginProtocolPolicy.MATCH_VIEWER
+          protocolPolicy: cf.OriginProtocolPolicy.HTTP_ONLY
         }),
+        originRequestPolicy: cf.OriginRequestPolicy.ALL_VIEWER,
         viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       },
       domainNames: [
