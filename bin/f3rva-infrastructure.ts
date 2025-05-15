@@ -51,11 +51,11 @@ const devStackProperties: F3RVAStackProps = {
   appName: appName,
   envName: "dev",
   databaseInstanceName: "f3rva_dev",
-  databaseInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+  databaseInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
   bdDatabaseName: bdDatabaseName,
   webDatabaseName: webDatabaseName,
-  webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
-  amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
+  webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
+  amiId: "ami-05a3e0187917e3e24", // Amazon Linux 2023 AMI ARM64
   keyPairName: "f3rva-dev-wordpress-key-pair",
   adminEmailSource: "admin@dev.f3rva.org",
   adminEmailDestination: "f3rva.corporate.dev@gmail.com",
@@ -69,11 +69,11 @@ const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = {
   appName: appName,
   envName: "prod",
   databaseInstanceName: "f3rva_prod",
-  databaseInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
+  databaseInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
   bdDatabaseName: bdDatabaseName,
   webDatabaseName: webDatabaseName,
-  webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T3A, ec2.InstanceSize.MICRO),
-  amiId: "ami-0df435f331839b2d6", // Amazon Linux 2023 AMI
+  webInstanceType: ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
+  amiId: "ami-05a3e0187917e3e24", // Amazon Linux 2023 AMI ARM64
   keyPairName: "f3rva-prod-wordpress-key-pair",
   adminEmailSource: "admin@f3rva.org",
   adminEmailDestination: "f3rva.corporate.prod@gmail.com",
