@@ -59,7 +59,8 @@ export class F3RVAStackDistribution extends cdk.Stack {
     // link the cloudfront distribution to the route 53 hosted zone
     hostedZoneDomains.forEach(domain => {
       const hostedZoneId = cdk.Fn.importValue(`${appName}-${envName}-${domain.replace(/\./g, ":")}-hostedZone`);
-      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'ImportedHostedZone', {
+      const hostedZoneName = `${appName}-${envName}-${domain}-hostedZone`;
+      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, hostedZoneName, {
         hostedZoneId: hostedZoneId,
         zoneName: domain,
       });
@@ -70,6 +71,7 @@ export class F3RVAStackDistribution extends cdk.Stack {
         zone: hostedZone,
         recordName: webDomainName,
         target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+        ttl: cdk.Duration.minutes(5),
       });
 
       cdk.Tags.of(aRecordWeb).add("Name", `${appName}-${envName}-${aRecordNameWeb}`);
@@ -80,6 +82,7 @@ export class F3RVAStackDistribution extends cdk.Stack {
         zone: hostedZone,
         recordName: bdDomainName,
         target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(distribution)),
+        ttl: cdk.Duration.minutes(5),
       });
 
       cdk.Tags.of(aRecordBD).add("Name", `${appName}-${envName}-${aRecordNameBD}`);
