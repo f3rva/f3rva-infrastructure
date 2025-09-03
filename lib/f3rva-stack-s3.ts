@@ -20,15 +20,13 @@ export class F3RVAStackS3 extends cdk.Stack {
     // stack props
     const appName = props!.appName;
     const envName = props!.envName;
+    const accountNumber = props!.env?.account;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Create a bucket and the associated policies to host web content
-
-    // Create S3 bucket for static website assets (kept private; served via CloudFront)
     const websiteBucketName = `${appName}-${envName}-website`;
     const websiteBucket = new s3.Bucket(this, websiteBucketName, {
       bucketName: websiteBucketName,
-      // websiteIndexDocument/websiteErrorDocument removed on purpose: we'll serve via CloudFront
       encryption: s3.BucketEncryption.S3_MANAGED,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
@@ -56,29 +54,26 @@ export class F3RVAStackS3 extends cdk.Stack {
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    // iam role for deployments to bucket
-    const syncRoleName = 's3SyncRole';
-    const syncRole = new iam.Role(this, syncRoleName, {
-      assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com'),
-      description: 'Role that can sync files to the website S3 bucket'
-    });
-    cdk.Tags.of(syncRole).add('Name', `${appName}-${envName}-${syncRoleName}`);
+    // import the GH Actions role ARN and create a role reference
+    const ghActionsRoleArn = cdk.Fn.importValue(`${appName}-${envName}-ghActionsRoleArn`);
+    const ghActionsRole = iam.Role.fromRoleArn(this, 'ghActionsRole', ghActionsRoleArn, { mutable: true });
 
-    // Attach a fine-grained policy allowing list on bucket and object operations on objects
-    const syncPolicyName = 's3SyncManagedPolicy';
-    const syncPolicy = new iam.ManagedPolicy(this, syncPolicyName, {
-      statements: [
-        new iam.PolicyStatement({
-          actions: ['s3:ListBucket'],
-          resources: [websiteBucket.bucketArn]
-        }),
-        new iam.PolicyStatement({
-          actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:GetObjectVersion'],
-          resources: [websiteBucket.arnForObjects('*')]
-        })
-      ]
+    // allow synching to the bucket
+    const s3FullAccessPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['s3:ListBucket', 's3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:GetObjectVersion'],
+      resources: [websiteBucket.bucketArn, websiteBucket.bucketArn + '/*']
     });
-    syncRole.addManagedPolicy(syncPolicy);
+    ghActionsRole.addToPrincipalPolicy(s3FullAccessPolicy);
+
+    // allow cloudfront distribution invalidation
+    const cfResourceArn = `arn:aws:cloudfront::${accountNumber}:distribution/${cfDistribution.distributionId}`;
+    const cfInvalidationPolicy = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['cloudfront:CreateInvalidation'],
+      resources: [cfResourceArn]
+    });
+    ghActionsRole.addToPrincipalPolicy(cfInvalidationPolicy);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
@@ -95,11 +90,6 @@ export class F3RVAStackS3 extends cdk.Stack {
     new cdk.CfnOutput(this, 'websiteBucketArn', {
       value: websiteBucket.bucketArn,
       exportName: `${appName}-${envName}-websiteBucketArn`
-    });
-
-    new cdk.CfnOutput(this, 's3SyncRoleArn', {
-      value: syncRole.roleArn,
-      exportName: `${appName}-${envName}-s3SyncRoleArn`
     });
 
     new cdk.CfnOutput(this, 'cloudFrontDomainName', {
