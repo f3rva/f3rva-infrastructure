@@ -1,8 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
-import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cf from 'aws-cdk-lib/aws-cloudfront';
+import * as cm from 'aws-cdk-lib/aws-certificatemanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -21,6 +24,12 @@ export class F3RVAStackS3 extends cdk.Stack {
     const appName = props!.appName;
     const envName = props!.envName;
     const accountNumber = props!.env?.account;
+    const webDomainName = props!.webDomainName;
+    const hostedZoneDomains = props!.dns.hostedZones;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // stack inputs
+    const wildcardCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-wildcardCertificateArn`);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Create a bucket and the associated policies to host web content
@@ -36,7 +45,7 @@ export class F3RVAStackS3 extends cdk.Stack {
 
     // Create a CloudFront Origin Access Identity so the bucket can remain private
     const cfOAIName = `${appName}-${envName}-website-distribution-oai`;
-    const oai = new cloudfront.OriginAccessIdentity(this, cfOAIName, {
+    const oai = new cf.OriginAccessIdentity(this, cfOAIName, {
       comment: `OAI for ${websiteBucketName}`
     });
 
@@ -44,13 +53,48 @@ export class F3RVAStackS3 extends cdk.Stack {
     websiteBucket.grantRead(oai);
 
     // Create CloudFront distribution in front of the S3 bucket
+    const wildcardCertificate = cm.Certificate.fromCertificateArn(this, "WildcardCertificate", wildcardCertificateArn);
     const cfDistributionName = `${appName}-${envName}-website-distribution`;
-    const cfDistribution = new cloudfront.Distribution(this, cfDistributionName, {
+    const cfDistribution = new cf.Distribution(this, cfDistributionName, {
+      defaultRootObject: 'index.html',
+      httpVersion: cf.HttpVersion.HTTP2,
+      certificate: wildcardCertificate,
       defaultBehavior: {
+        allowedMethods: cf.AllowedMethods.ALLOW_ALL,
+        cachedMethods: cf.CachedMethods.CACHE_GET_HEAD,
+        compress: true,
         origin: new origins.S3Origin(websiteBucket, { originAccessIdentity: oai }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+        originRequestPolicy: cf.OriginRequestPolicy.ALL_VIEWER,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       },
-      defaultRootObject: 'index.html'
+      domainNames: [
+        webDomainName
+      ],
+      minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
+      priceClass: cf.PriceClass.PRICE_CLASS_100, // US, Canada, Europe, Isreal
+    });
+    cdk.Tags.of(cfDistribution).add("Name", `${appName}-${envName}-${cfDistributionName}`);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // link the cloudfront distribution to the route 53 hosted zone
+    hostedZoneDomains.forEach(domain => {
+      const hostedZoneId = cdk.Fn.importValue(`${appName}-${envName}-${domain.replace(/\./g, ":")}-hostedZone`);
+      const hostedZoneName = `${appName}-${envName}-${domain}-hostedZone`;
+      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, hostedZoneName, {
+        hostedZoneId: hostedZoneId,
+        zoneName: domain,
+      });
+
+      // create the A record for the cloudfront distribution for the web domain
+      const aRecordNameWeb = `${appName}-${envName}-${domain}-${webDomainName}-aRecord`;
+      const aRecordWeb = new route53.ARecord(this, aRecordNameWeb, {
+        zone: hostedZone,
+        recordName: webDomainName,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(cfDistribution)),
+        ttl: cdk.Duration.minutes(5),
+      });
+
+      cdk.Tags.of(aRecordWeb).add("Name", `${appName}-${envName}-${aRecordNameWeb}`);
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
