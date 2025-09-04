@@ -64,7 +64,7 @@ const devStackProperties: F3RVAStackProps = {
   adminEmailDestination: "f3rva.corporate.dev@gmail.com",
   baseDomain: "dev.f3rva.org",
   bdDomainName: "bigdata.dev.f3rva.org",
-  webDomainName: "dev.f3rva.org"
+  webDomainName: "www.dev.f3rva.org"
 }
 
 const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = { 
@@ -83,7 +83,7 @@ const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = {
   adminEmailDestination: "f3rva.corporate.prod@gmail.com",
   baseDomain: "f3rva.org",
   bdDomainName: "bigdata.f3rva.org",
-  webDomainName: "f3rva.org"
+  webDomainName: "www.f3rva.org"
 }
 
 const app = new cdk.App();
