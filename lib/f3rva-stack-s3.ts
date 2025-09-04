@@ -56,7 +56,7 @@ export class F3RVAStackS3 extends cdk.Stack {
     const wildcardCertificate = cm.Certificate.fromCertificateArn(this, "WildcardCertificate", wildcardCertificateArn);
     const cfDistributionName = `${appName}-${envName}-website-distribution`;
     const cfDistribution = new cf.Distribution(this, cfDistributionName, {
-      defaultRootObject: 'index.html',
+      defaultRootObject: '/index.html',
       httpVersion: cf.HttpVersion.HTTP2,
       certificate: wildcardCertificate,
       defaultBehavior: {
@@ -64,11 +64,18 @@ export class F3RVAStackS3 extends cdk.Stack {
         cachedMethods: cf.CachedMethods.CACHE_GET_HEAD,
         compress: true,
         origin: new origins.S3Origin(websiteBucket, { originAccessIdentity: oai }),
-        originRequestPolicy: cf.OriginRequestPolicy.ALL_VIEWER,
         viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       },
       domainNames: [
         webDomainName
+      ],
+      errorResponses: [
+        {
+          httpStatus: 404,
+          responsePagePath: '/index.html',
+          responseHttpStatus: 200,
+          ttl: cdk.Duration.minutes(5)
+        }
       ],
       minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
       priceClass: cf.PriceClass.PRICE_CLASS_100, // US, Canada, Europe, Isreal
