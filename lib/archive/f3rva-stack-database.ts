@@ -2,7 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import { Construct } from 'constructs';
-import { F3RVAStackProps } from './f3rva-stack-properties';
+import { F3RVAStackProps } from '../f3rva-stack-properties';
 
 
 export class F3RVAStackDatabase extends cdk.Stack {
