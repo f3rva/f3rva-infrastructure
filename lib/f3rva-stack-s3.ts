@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as cf from 'aws-cdk-lib/aws-cloudfront';
 import * as cm from 'aws-cdk-lib/aws-certificatemanager';
@@ -53,17 +54,47 @@ export class F3RVAStackS3 extends cdk.Stack {
       originAccessControl: oac
     });
     
+    // Create CloudFront function for redirects
+    const redirectsFunctionName = `${appName}-${envName}-website-redirects-function`;
+    const redirectsFunction = new cf.Function(this, redirectsFunctionName, {
+      code: cf.FunctionCode.fromFile( {
+        filePath: path.join(__dirname, '..', 'src', 'functions', 'cloudfront', 'redirects.js'),
+      }),
+      comment: 'CloudFront function that implements site redirects',
+      functionName: redirectsFunctionName
+    });
+
+    // setup CloudFront logging bucket and policy
+    const cfLoggingBucketName = `${appName}-${envName}-cf-logs`;
+    const cfLogFilePrefix = 'cf-logs/';
+    const cfLoggingBucket = new s3.Bucket(this, cfLoggingBucketName, {
+      bucketName: cfLoggingBucketName,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+    });
+    cdk.Tags.of(cfLoggingBucket).add('Name', cfLoggingBucketName);
+
     // Create CloudFront distribution in front of the S3 bucket
     const wildcardCertificate = cm.Certificate.fromCertificateArn(this, "WildcardCertificate", wildcardCertificateArn);
     const cfDistributionName = `${appName}-${envName}-website-distribution`;
     const cfDistribution = new cf.Distribution(this, cfDistributionName, {
       defaultRootObject: 'index.html',
       httpVersion: cf.HttpVersion.HTTP2,
+      enableLogging: true,
+      logBucket: cfLoggingBucket,
+      logFilePrefix: cfLogFilePrefix,
       certificate: wildcardCertificate,
       defaultBehavior: {
         allowedMethods: cf.AllowedMethods.ALLOW_ALL,
         cachedMethods: cf.CachedMethods.CACHE_GET_HEAD,
         compress: true,
+        functionAssociations: [ {
+          eventType: cf.FunctionEventType.VIEWER_REQUEST,
+          function: redirectsFunction
+        }],
         origin: s3Origin,
         viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       },
@@ -72,11 +103,17 @@ export class F3RVAStackS3 extends cdk.Stack {
       ],
       errorResponses: [
         {
+          httpStatus: 403,
+          responsePagePath: '/index.html',
+          responseHttpStatus: 200,
+          ttl: cdk.Duration.minutes(5)
+        },
+        {
           httpStatus: 404,
           responsePagePath: '/index.html',
           responseHttpStatus: 200,
           ttl: cdk.Duration.minutes(5)
-        }
+        },
       ],
       minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
       priceClass: cf.PriceClass.PRICE_CLASS_100, // US, Canada, Europe, Isreal
@@ -92,7 +129,16 @@ export class F3RVAStackS3 extends cdk.Stack {
       resources: [websiteBucket.arnForObjects('*')],
       conditions: {
         StringEquals: { 'aws:SourceArn': cfDistribution.distributionArn }
-      }
+      },
+    }));
+
+    // Add a bucket policy to allow CloudFront to write logs to the logging bucket
+    cfLoggingBucket.addToResourcePolicy(new iam.PolicyStatement({
+      sid: 'AllowCloudFrontLogging',
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+      actions: ['s3:PutObject'],
+      resources: [cfLoggingBucket.arnForObjects(`${cfLogFilePrefix}*`)],
     }));
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,6 +211,11 @@ export class F3RVAStackS3 extends cdk.Stack {
     new cdk.CfnOutput(this, 'cloudFrontDistributionId', {
       value: cfDistribution.distributionId,
       exportName: `${appName}-${envName}-cloudFrontDistributionId`
+    });
+
+    new cdk.CfnOutput(this, 'redirectsFunctionName', {
+      value: redirectsFunction.functionName,
+      exportName: `${appName}-${envName}-redirectsFunctionName`
     });
   }
 }
