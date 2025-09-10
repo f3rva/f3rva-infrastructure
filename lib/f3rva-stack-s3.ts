@@ -110,8 +110,7 @@ export class F3RVAStackS3 extends cdk.Stack {
       const aRecordWeb = new route53.ARecord(this, aRecordNameWeb, {
         zone: hostedZone,
         recordName: webDomainName,
-        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(cfDistribution)),
-        ttl: cdk.Duration.minutes(5),
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(cfDistribution))
       });
 
       cdk.Tags.of(aRecordWeb).add("Name", `${appName}-${envName}-${aRecordNameWeb}`);
