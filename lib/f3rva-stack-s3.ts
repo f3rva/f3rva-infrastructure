@@ -1,8 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
-import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cf from 'aws-cdk-lib/aws-cloudfront';
+import * as cm from 'aws-cdk-lib/aws-certificatemanager';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 
@@ -21,6 +24,12 @@ export class F3RVAStackS3 extends cdk.Stack {
     const appName = props!.appName;
     const envName = props!.envName;
     const accountNumber = props!.env?.account;
+    const webDomainName = props!.webDomainName;
+    const hostedZoneDomains = props!.dns.hostedZones;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // stack inputs
+    const wildcardCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-wildcardCertificateArn`);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Create a bucket and the associated policies to host web content
@@ -34,23 +43,77 @@ export class F3RVAStackS3 extends cdk.Stack {
     });
     cdk.Tags.of(websiteBucket).add('Name', websiteBucketName);
 
-    // Create a CloudFront Origin Access Identity so the bucket can remain private
-    const cfOAIName = `${appName}-${envName}-website-distribution-oai`;
-    const oai = new cloudfront.OriginAccessIdentity(this, cfOAIName, {
-      comment: `OAI for ${websiteBucketName}`
+    // Create the CloudFront Origin Access Control to link the S3 bucket to CloudFront
+    const cfOACName = `${appName}-${envName}-website-distribution-oac`;
+    const oac = new cf.S3OriginAccessControl(this, cfOACName, {
+      signing: cf.Signing.SIGV4_ALWAYS
     });
 
-    // Grant CloudFront read access to the bucket
-    websiteBucket.grantRead(oai);
-
+    const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(websiteBucket, {
+      originAccessControl: oac
+    });
+    
     // Create CloudFront distribution in front of the S3 bucket
+    const wildcardCertificate = cm.Certificate.fromCertificateArn(this, "WildcardCertificate", wildcardCertificateArn);
     const cfDistributionName = `${appName}-${envName}-website-distribution`;
-    const cfDistribution = new cloudfront.Distribution(this, cfDistributionName, {
+    const cfDistribution = new cf.Distribution(this, cfDistributionName, {
+      defaultRootObject: 'index.html',
+      httpVersion: cf.HttpVersion.HTTP2,
+      certificate: wildcardCertificate,
       defaultBehavior: {
-        origin: new origins.S3Origin(websiteBucket, { originAccessIdentity: oai }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
+        allowedMethods: cf.AllowedMethods.ALLOW_ALL,
+        cachedMethods: cf.CachedMethods.CACHE_GET_HEAD,
+        compress: true,
+        origin: s3Origin,
+        viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       },
-      defaultRootObject: 'index.html'
+      domainNames: [
+        webDomainName
+      ],
+      errorResponses: [
+        {
+          httpStatus: 404,
+          responsePagePath: '/index.html',
+          responseHttpStatus: 200,
+          ttl: cdk.Duration.minutes(5)
+        }
+      ],
+      minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
+      priceClass: cf.PriceClass.PRICE_CLASS_100, // US, Canada, Europe, Isreal
+    });
+    cdk.Tags.of(cfDistribution).add("Name", `${appName}-${envName}-${cfDistributionName}`);
+
+    // Add a bucket policy to only allow the CloudFront distribution to access the bucket
+    websiteBucket.addToResourcePolicy(new iam.PolicyStatement({
+      sid: 'AllowCloudFrontOACReadOnly',
+      effect: iam.Effect.ALLOW,
+      principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+      actions: ['s3:GetObject'],
+      resources: [websiteBucket.arnForObjects('*')],
+      conditions: {
+        StringEquals: { 'aws:SourceArn': cfDistribution.distributionArn }
+      }
+    }));
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // link the cloudfront distribution to the route 53 hosted zone
+    hostedZoneDomains.forEach(domain => {
+      const hostedZoneId = cdk.Fn.importValue(`${appName}-${envName}-${domain.replace(/\./g, ":")}-hostedZone`);
+      const hostedZoneName = `${appName}-${envName}-${domain}-hostedZone`;
+      const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, hostedZoneName, {
+        hostedZoneId: hostedZoneId,
+        zoneName: domain,
+      });
+
+      // create the A record for the cloudfront distribution for the web domain
+      const aRecordNameWeb = `${appName}-${envName}-${domain}-${webDomainName}-aRecord`;
+      const aRecordWeb = new route53.ARecord(this, aRecordNameWeb, {
+        zone: hostedZone,
+        recordName: webDomainName,
+        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(cfDistribution))
+      });
+
+      cdk.Tags.of(aRecordWeb).add("Name", `${appName}-${envName}-${aRecordNameWeb}`);
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,8 +121,9 @@ export class F3RVAStackS3 extends cdk.Stack {
     const ghActionsRoleArn = cdk.Fn.importValue(`${appName}-${envName}-ghActionsRoleArn`);
     const ghActionsRole = iam.Role.fromRoleArn(this, 'ghActionsRole', ghActionsRoleArn, { mutable: true });
 
-    // allow synching to the bucket
+    // allow syncing to the bucket
     const s3FullAccessPolicy = new iam.PolicyStatement({
+      sid: 'AllowGHActionSyncing',
       effect: iam.Effect.ALLOW,
       actions: ['s3:ListBucket', 's3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:GetObjectVersion'],
       resources: [websiteBucket.bucketArn, websiteBucket.bucketArn + '/*']
@@ -69,6 +133,7 @@ export class F3RVAStackS3 extends cdk.Stack {
     // allow cloudfront distribution invalidation
     const cfResourceArn = `arn:aws:cloudfront::${accountNumber}:distribution/${cfDistribution.distributionId}`;
     const cfInvalidationPolicy = new iam.PolicyStatement({
+      sid: 'AllowGHActionInvalidation',
       effect: iam.Effect.ALLOW,
       actions: ['cloudfront:CreateInvalidation'],
       resources: [cfResourceArn]
