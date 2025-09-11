@@ -61,6 +61,7 @@ export class F3RVAStackS3 extends cdk.Stack {
         filePath: path.join(__dirname, '..', 'src', 'functions', 'cloudfront', 'redirects.js'),
       }),
       comment: 'CloudFront function that implements site redirects',
+      runtime: cf.FunctionRuntime.JS_2_0,
       functionName: redirectsFunctionName
     });
 
