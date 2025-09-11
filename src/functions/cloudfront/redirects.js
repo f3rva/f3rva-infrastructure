@@ -7,7 +7,7 @@ function handler(event) {
         uri.startsWith('/posts') ||       // no trailing slash
         uri.startsWith('/tag/') ||        // trailing slash
         uri.startsWith('/author/')        // trailing slash
-  ){
+    ) {
         // Construct the new URL using the new domain and the original path
         var newUrl = 'https://backblasts.f3rva.org' + uri;
         
