@@ -3,7 +3,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigw2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import { Construct } from 'constructs';
-import { F3RVAStackProps } from './f3rva-stack-properties';
+import { F3RVAStackProps } from '../f3rva-stack-properties';
 
 export class F3RVAStackLambda extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {

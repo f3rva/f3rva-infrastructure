@@ -5,25 +5,26 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { F3RVAStackProps, F3RVAStackDNSProps } from '../lib/f3rva-stack-properties';
 import { F3RVAStackDNS } from '../lib/f3rva-stack-dns';
 import { F3RVAStackEmail } from '../lib/f3rva-stack-email';
-import { F3RVAStackNetwork } from '../lib/f3rva-stack-network';
-import { F3RVAStackDatabase } from '../lib/f3rva-stack-database';
-import { F3RVAStackStorage } from '../lib/f3rva-stack-storage';
-import { F3RVAStackCompute } from '../lib/f3rva-stack-compute';
 import { F3RVAStackCertificates } from '../lib/f3rva-stack-certificates';
-import { F3RVAStackDistribution } from '../lib/f3rva-stack-distribution';
-import { F3RVAStackLambda } from '../lib/f3rva-stack-lambda';
 import { F3RVAStackS3 } from '../lib/f3rva-stack-s3';
 import { F3RVAStackSecurity } from '../lib/f3rva-stack-security';
 
-// accounts
-//const awsAccountDevelopment = { account: '908188673576', region: 'us-east-1' };
-const awsAccountDevelopment = { account: '590183876163', region: 'us-east-1' };
-const awsAccountProduction = { account: '992382422376', region: 'us-east-1' };
+const app = new cdk.App();
 
-// stacks
-let stackProperties: { [name: string]: F3RVAStackProps } = {};
-const devStackKey = "f3rva-dev";
-const prodStackKey = "f3rva-prod";
+// Get the account information from the sourced environment variables
+const devAccount = process.env.F3RVA_ACCOUNT_DEV;
+const prodAccount = process.env.F3RVA_ACCOUNT_PROD;
+
+if (!devAccount) {
+  throw new Error("Please specify required environment variable F3RVA_ACCOUNT_DEV");
+}
+if (!prodAccount) {
+  throw new Error("Please specify required environment variable F3RVA_ACCOUNT_PROD");
+}
+
+// account settings
+const awsAccountDevelopment = { account: devAccount, region: "us-east-1" };
+const awsAccountProduction = { account: prodAccount, region: "us-east-1" };
 
 // common parameters across environments
 const appName = "f3rva";
@@ -67,7 +68,7 @@ const devStackProperties: F3RVAStackProps = {
   webDomainName: "www.dev.f3rva.org"
 }
 
-const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = { 
+const prodStackProperties: F3RVAStackProps = { 
   env: awsAccountProduction,
   dns: prodStackDNSProperties,
   appName: appName,
@@ -86,8 +87,6 @@ const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = {
   webDomainName: "www.f3rva.org"
 }
 
-const app = new cdk.App();
-
 // dev stack
 const devDnsStack = new F3RVAStackDNS(app, "F3RVA-dns-dev", devStackDNSProperties);
 const devEmailStack = new F3RVAStackEmail(app, "F3RVA-email-dev", devStackProperties);
@@ -95,29 +94,9 @@ const devCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates
 const devSecurityStack = new F3RVAStackSecurity(app, "F3RVA-security-dev", devStackProperties);
 const devS3Stack = new F3RVAStackS3(app, "F3RVA-s3-dev", devStackProperties);
 
-// future stacks
-// these work but aren't currently in use.  move them up when actually in use
-const devNetworkStack = new F3RVAStackNetwork(app, "F3RVA-network-dev", devStackProperties);
-devStackProperties.vpc = devNetworkStack.vpc;
-const devStorageStack = new F3RVAStackStorage(app, "F3RVA-storage-dev", devStackProperties);
-const devDataStack = new F3RVAStackDatabase(app, "F3RVA-database-dev", devStackProperties);
-const devEc2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-dev", devStackProperties);
-const devCfStack = new F3RVAStackDistribution(app, "F3RVA-distribution-dev", devStackProperties);
-const devLambdaStack = new F3RVAStackLambda(app, "F3RVA-lambda-dev", devStackProperties);
-
 // prod stack
 const prodDnsStack = new F3RVAStackDNS(app, "F3RVA-dns-prod", prodStackDNSProperties);
 const prodEmailStack = new F3RVAStackEmail(app, "F3RVA-email-prod", prodStackProperties);
 const prodCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-prod", prodStackProperties);
 const prodSecurityStack = new F3RVAStackSecurity(app, "F3RVA-security-prod", prodStackProperties);
 const prodS3Stack = new F3RVAStackS3(app, "F3RVA-s3-prod", prodStackProperties);
-
-// future stacks
-// these work but aren't currently in use.  move them up when actually in use
-const prodNetworkStack = new F3RVAStackNetwork(app, "F3RVA-network-prod", prodStackProperties);
-prodStackProperties.vpc = prodNetworkStack.vpc;
-const prodStorageStack = new F3RVAStackStorage(app, "F3RVA-storage-prod", prodStackProperties);
-const prodDataStack = new F3RVAStackDatabase(app, "F3RVA-database-prod", prodStackProperties);
-const prodEc2Stack = new F3RVAStackCompute(app, "F3RVA-wordpress-prod", prodStackProperties);
-const prodCfStack = new F3RVAStackDistribution(app, "F3RVA-distribution-prod", prodStackProperties);
-const prodLambdaStack = new F3RVAStackLambda(app, "F3RVA-lambda-prod", prodStackProperties);
