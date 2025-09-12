@@ -9,15 +9,22 @@ import { F3RVAStackCertificates } from '../lib/f3rva-stack-certificates';
 import { F3RVAStackS3 } from '../lib/f3rva-stack-s3';
 import { F3RVAStackSecurity } from '../lib/f3rva-stack-security';
 
-// accounts
-//const awsAccountDevelopment = { account: '908188673576', region: 'us-east-1' };
-const awsAccountDevelopment = { account: '590183876163', region: 'us-east-1' };
-const awsAccountProduction = { account: '992382422376', region: 'us-east-1' };
+const app = new cdk.App();
 
-// stacks
-let stackProperties: { [name: string]: F3RVAStackProps } = {};
-const devStackKey = "f3rva-dev";
-const prodStackKey = "f3rva-prod";
+// Get the account information from the sourced environment variables
+const devAccount = process.env.F3RVA_ACCOUNT_DEV;
+const prodAccount = process.env.F3RVA_ACCOUNT_PROD;
+
+if (!devAccount) {
+  throw new Error("Please specify required environment variable F3RVA_ACCOUNT_DEV");
+}
+if (!prodAccount) {
+  throw new Error("Please specify required environment variable F3RVA_ACCOUNT_PROD");
+}
+
+// account settings
+const awsAccountDevelopment = { account: devAccount, region: "us-east-1" };
+const awsAccountProduction = { account: prodAccount, region: "us-east-1" };
 
 // common parameters across environments
 const appName = "f3rva";
@@ -61,7 +68,7 @@ const devStackProperties: F3RVAStackProps = {
   webDomainName: "www.dev.f3rva.org"
 }
 
-const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = { 
+const prodStackProperties: F3RVAStackProps = { 
   env: awsAccountProduction,
   dns: prodStackDNSProperties,
   appName: appName,
@@ -79,8 +86,6 @@ const prodStackProperties: F3RVAStackProps = stackProperties[prodStackKey] = {
   bdDomainName: "bigdata.f3rva.org",
   webDomainName: "www.f3rva.org"
 }
-
-const app = new cdk.App();
 
 // dev stack
 const devDnsStack = new F3RVAStackDNS(app, "F3RVA-dns-dev", devStackDNSProperties);
