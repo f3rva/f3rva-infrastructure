@@ -15,6 +15,8 @@ import { F3RVAStackProps } from './f3rva-stack-properties';
 //
 // 1. Create a S3 bucket necessary for the website
 // 2. Create the roles needed to remotely deploy to the bucket
+// 3. Create a CloudFront distribution in front of the S3 bucket
+// 4. Create the DNS records to point to the CloudFront distribution
 ////////////////////////////////////////////////////////////////////////////////////////////////
 export class F3RVAStackS3 extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
@@ -25,12 +27,14 @@ export class F3RVAStackS3 extends cdk.Stack {
     const appName = props!.appName;
     const envName = props!.envName;
     const accountNumber = props!.env?.account;
+    const baseDomainName = props!.baseDomain;
     const webDomainName = props!.webDomainName;
     const hostedZoneDomains = props!.dns.hostedZones;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // stack inputs
-    const wildcardCertificateArn = cdk.Fn.importValue(`${appName}-${envName}-wildcardCertificateArn`);
+    const wildcardCertificateArn = cdk.Fn.importValue(
+      `${appName}-${envName}-${baseDomainName.replace(/\./g, "-")}-wildcardCertificateArn`);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Create a bucket and the associated policies to host web content
@@ -43,6 +47,23 @@ export class F3RVAStackS3 extends cdk.Stack {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL
     });
     cdk.Tags.of(websiteBucket).add('Name', websiteBucketName);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // Create a bucket used to redirect alternative domain names to the main domain name
+    const redirectBucketName = `${appName}-${envName}-redirect`;
+    const redirectBucket = new s3.Bucket(this, redirectBucketName, {
+      bucketName: redirectBucketName,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      publicReadAccess: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ACLS_ONLY,
+      websiteRedirect: {
+        hostName: baseDomainName,
+        protocol: s3.RedirectProtocol.HTTPS
+      }
+    });
+    cdk.Tags.of(redirectBucket).add('Name', redirectBucketName);
 
     // Create the CloudFront Origin Access Control to link the S3 bucket to CloudFront
     const cfOACName = `${appName}-${envName}-website-distribution-oac`;
@@ -100,6 +121,7 @@ export class F3RVAStackS3 extends cdk.Stack {
         viewerProtocolPolicy: cf.ViewerProtocolPolicy.REDIRECT_TO_HTTPS
       },
       domainNames: [
+        baseDomainName,
         webDomainName
       ],
       errorResponses: [
@@ -119,7 +141,7 @@ export class F3RVAStackS3 extends cdk.Stack {
       minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
       priceClass: cf.PriceClass.PRICE_CLASS_100, // US, Canada, Europe, Isreal
     });
-    cdk.Tags.of(cfDistribution).add("Name", `${appName}-${envName}-${cfDistributionName}`);
+    cdk.Tags.of(cfDistribution).add("Name", `${cfDistributionName}`);
 
     // Add a bucket policy to only allow the CloudFront distribution to access the bucket
     websiteBucket.addToResourcePolicy(new iam.PolicyStatement({
@@ -152,15 +174,28 @@ export class F3RVAStackS3 extends cdk.Stack {
         zoneName: domain,
       });
 
-      // create the A record for the cloudfront distribution for the web domain
-      const aRecordNameWeb = `${appName}-${envName}-${domain}-${webDomainName}-aRecord`;
-      const aRecordWeb = new route53.ARecord(this, aRecordNameWeb, {
+      // if the domain is the same as the basedomain, link it to cloudfront
+      // if not, link it to s3 redirect bucket
+      var aRecordTarget : route53.IAliasRecordTarget = new targets.BucketWebsiteTarget(redirectBucket);
+      if (domain === baseDomainName) {
+        aRecordTarget = new targets.CloudFrontTarget(cfDistribution);
+      }
+      // create the A record
+      const aRecordName = `${appName}-${envName}-${domain}-aRecord`;
+      const aRecord = new route53.ARecord(this, aRecordName, {
         zone: hostedZone,
-        recordName: webDomainName,
-        target: route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(cfDistribution))
+        //recordName: hostedZone.zoneName,
+        target: route53.RecordTarget.fromAlias(aRecordTarget)
       });
+      aRecord.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
 
-      cdk.Tags.of(aRecordWeb).add("Name", `${appName}-${envName}-${aRecordNameWeb}`);
+      // create a CNAME record for all base domains for the www subdomain
+      const cnameRecordNameBase = `${appName}-${envName}-${domain}-${webDomainName}-cnameRecord`;
+      const cnameRecordBase = new route53.CnameRecord(this, cnameRecordNameBase, {
+        zone: hostedZone,
+        recordName: "www",
+        domainName: domain,
+      });
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
