@@ -38,23 +38,6 @@ function handler(event) {
         };
     }
 
-    // Redirect www.<host> to the naked host, preserving path and querystring
-    var hostHeader = request.headers && request.headers.host && request.headers.host.value;
-    if (hostHeader && /^www\./i.test(hostHeader)) {
-        var nakedHost = hostHeader.replace(/^www\./i, '');
-        var qs = request.querystring ? ('?' + request.querystring) : '';
-        var newUrl = 'https://' + nakedHost + uri + qs;
-        return {
-            statusCode: 301,
-            statusDescription: 'Moved Permanently',
-            headers: {
-                'location': {
-                    'value': newUrl
-                }
-            }
-        };
-    }
-
     // If the URI does not match any redirect rules, return the original request unchanged
     return request;
 }
