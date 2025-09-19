@@ -4,6 +4,13 @@ This is a CDK based project to build all required AWS infrastructure for both th
 
 WIP.
 
+## Setup
+Execution of these stacks requires environment variables defined in your shell environment
+(e.g. .zshrc).  The environment variables should be defined as follows:
+
+`F3RVA_ACCOUNT_DEV=123456789012`
+`F3RVA_ACCOUNT_PROD=987654321098`
+
 ## Stack specific examples
 
 * `cdk deploy F3RVA-network-dev`                                                              deploy the VPC and supporting network
