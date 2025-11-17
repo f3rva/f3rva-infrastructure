@@ -8,31 +8,13 @@ function handler(event) {
         uri.startsWith('/tag/') ||        // trailing slash
         uri.startsWith('/author/')        // trailing slash
     ) {
-        // Construct the new URL using the new domain and the original path
-        var newUrl = 'https://backblasts.f3rva.org' + uri;
-        
         // Return a 301 redirect response
         return {
             statusCode: 301,
             statusDescription: 'Moved Permanently',
             headers: {
                 'location': {
-                    'value': newUrl
-                }
-            }
-        };
-    }
-
-    // Redirect individual WordPress posts that follow the /YYYY/ format
-    var postRegex = /^\/\d{4}\//;
-    if (postRegex.test(uri)) {
-        var newUrl = 'https://backblasts.f3rva.org' + uri;
-        return {
-            statusCode: 301,
-            statusDescription: 'Moved Permanently',
-            headers: {
-                'location': {
-                    'value': newUrl
+                    'value': '/archives'
                 }
             }
         };
