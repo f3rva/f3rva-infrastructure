@@ -30,6 +30,7 @@ export class F3RVAStackSecurity extends cdk.Stack {
 
     // create the principal with the required conditions
     const allowedRepositories = [
+      'repo:f3rva/f3rva-slack-app:*',
       'repo:f3rva/f3rva-website:*',
     ];
     
