@@ -19,12 +19,15 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "typeRoots": [
-      "./node_modules/@types"
+    "skipLibCheck": true,
+    "types": [
+      "node"
     ]
   },
   "exclude": [
     "node_modules",
-    "cdk.out"
+    "cdk.out",
+    "lib/archive",
+    "test"
   ]
 }
