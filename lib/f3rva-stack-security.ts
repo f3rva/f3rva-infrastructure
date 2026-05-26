@@ -53,6 +53,18 @@ export class F3RVAStackSecurity extends cdk.Stack {
     });
     cdk.Tags.of(ghActionsRole).add('Name', `${appName}-${envName}-${ghActionsRoleName}`);
 
+    // allow CDK bootstrap check and SSM Parameter Store read
+    const ssmReadPolicy = new iam.PolicyStatement({
+      sid: 'AllowGHActionSSMRead',
+      effect: iam.Effect.ALLOW,
+      actions: ['ssm:GetParameter', 'ssm:GetParameters'],
+      resources: [
+        'arn:aws:ssm:*:*:parameter/cdk-bootstrap/*',
+        `arn:aws:ssm:*:*:parameter/${appName}/*`
+      ]
+    });
+    ghActionsRole.addToPrincipalPolicy(ssmReadPolicy);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
     cdk.Tags.of(this).add("APPLICATION", appName);
