@@ -65,6 +65,17 @@ export class F3RVAStackSecurity extends cdk.Stack {
     });
     ghActionsRole.addToPrincipalPolicy(ssmReadPolicy);
 
+    // allow assuming standard CDK bootstrap roles for file publishing and deployments
+    const assumeCdkRolesPolicy = new iam.PolicyStatement({
+      sid: 'AllowGHActionAssumeCDKRoles',
+      effect: iam.Effect.ALLOW,
+      actions: ['sts:AssumeRole'],
+      resources: [
+        'arn:aws:iam::*:role/cdk-hnb659fds-*'
+      ]
+    });
+    ghActionsRole.addToPrincipalPolicy(assumeCdkRolesPolicy);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
     cdk.Tags.of(this).add("APPLICATION", appName);
