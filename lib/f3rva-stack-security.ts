@@ -30,6 +30,7 @@ export class F3RVAStackSecurity extends cdk.Stack {
 
     // create the principal with the required conditions
     const allowedRepositories = [
+      'repo:f3rva/f3rva-slack-app:*',
       'repo:f3rva/f3rva-website:*',
     ];
     
@@ -51,6 +52,29 @@ export class F3RVAStackSecurity extends cdk.Stack {
       description: 'Role assumed by github actions to perform deployments'
     });
     cdk.Tags.of(ghActionsRole).add('Name', `${appName}-${envName}-${ghActionsRoleName}`);
+
+    // allow CDK bootstrap check and SSM Parameter Store read
+    const ssmReadPolicy = new iam.PolicyStatement({
+      sid: 'AllowGHActionSSMRead',
+      effect: iam.Effect.ALLOW,
+      actions: ['ssm:GetParameter', 'ssm:GetParameters'],
+      resources: [
+        'arn:aws:ssm:*:*:parameter/cdk-bootstrap/*',
+        `arn:aws:ssm:*:*:parameter/${appName}/*`
+      ]
+    });
+    ghActionsRole.addToPrincipalPolicy(ssmReadPolicy);
+
+    // allow assuming standard CDK bootstrap roles for file publishing and deployments
+    const assumeCdkRolesPolicy = new iam.PolicyStatement({
+      sid: 'AllowGHActionAssumeCDKRoles',
+      effect: iam.Effect.ALLOW,
+      actions: ['sts:AssumeRole'],
+      resources: [
+        'arn:aws:iam::*:role/cdk-hnb659fds-*'
+      ]
+    });
+    ghActionsRole.addToPrincipalPolicy(assumeCdkRolesPolicy);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // tag to all resources created by this stack
