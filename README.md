@@ -66,3 +66,32 @@ A prerequisite for creating the EC2s is to create a key pair to allow SSH access
 * `aws ec2 create-key-pair --key-name f3rva-dev-wordpress-key-pair --key-type rsa --key-format pem --region us-east-1 --profile f3rva-dev`
 * save it in a .pem file
 * `chmod 400 *.pem`
+
+## Python Lambda API Conventions
+
+To maintain a consistent pattern for backend APIs and serverless workflows, all Python Lambda functions must adhere to the following naming and directory conventions:
+
+### 1. Directory Structure
+All Lambda function code is housed under `src/lambda/`, grouped by domain and action in snake_case format (`<domain>_<action>/`):
+```text
+src/
+└── lambda/
+    ├── email_forward/
+    │   ├── handler.py           # Standardized entry point
+    │   └── requirements.txt     # Local dependencies (if any)
+    └── schedule_fetch/
+        ├── handler.py
+        └── requirements.txt
+```
+
+### 2. Standard Code Patterns
+* **Filename**: The main entry point file must be named `handler.py`.
+* **Handler Name**: The entry function name must be `handler` (i.e. `def handler(event, context):`).
+
+### 3. Unit Testing
+Every Lambda function must have a corresponding test suite under `test/lambda/` matching the pattern `test_<domain>_<action>.py`:
+* **Filename**: `test/lambda/test_<domain>_<action>.py`
+* **Execution**: To run the suite directly:
+  ```bash
+  python3 test/lambda/test_<domain>_<action>.py
+  ```

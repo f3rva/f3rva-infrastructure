@@ -4,13 +4,13 @@ import sys
 import unittest
 from unittest.mock import MagicMock, patch
 
-# Add src/lambda/schedule_api to path for importing handler
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../src/lambda/schedule_api")))
+# Add src/lambda/schedule_fetch to path for importing handler
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../src/lambda/schedule_fetch")))
 
 import handler as schedule_handler
 
 
-class TestScheduleApiHandler(unittest.TestCase):
+class TestScheduleFetchHandler(unittest.TestCase):
 
     def test_slugify(self):
         self.assertEqual(schedule_handler.slugify("The Alamo!"), "the-alamo")

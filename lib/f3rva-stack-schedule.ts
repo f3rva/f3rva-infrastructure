@@ -9,7 +9,7 @@ import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
 import { BasePythonLambda } from './constructs/base-python-lambda';
 
-export class F3RVAStackScheduleApi extends cdk.Stack {
+export class F3RVAStackSchedule extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: F3RVAStackProps) {
     super(scope, id, props);
 
@@ -22,11 +22,10 @@ export class F3RVAStackScheduleApi extends cdk.Stack {
     const baseDomain = props!.baseDomain;
     const ssmParamName = `/f3rva/${envName}/f3nation_api_key`;
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     // Lambda function (AWS_IAM authentication mode to comply with public-access boundary rules)
-    const scheduleLambdaName = `${appName}-${envName}-schedule-api-lambda`;
+    const scheduleLambdaName = `${appName}-${envName}-schedule-lambda`;
     const scheduleLambda = new BasePythonLambda(this, scheduleLambdaName, {
-      entry: 'src/lambda/schedule_api',
+      entry: 'src/lambda/schedule_fetch',
       ssmParamName,
       authType: cdk.aws_lambda.FunctionUrlAuthType.AWS_IAM,
       environment: {
@@ -50,7 +49,7 @@ export class F3RVAStackScheduleApi extends cdk.Stack {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Create CloudFront FunctionUrlOriginAccessControl (OAC) to sign requests securely via SigV4
-    const oacName = `${appName}-${envName}-schedule-api-oac`;
+    const oacName = `${appName}-${envName}-schedule-oac`;
     const oac = new cloudfront.FunctionUrlOriginAccessControl(this, oacName, {
       originAccessControlName: oacName,
       signing: cloudfront.Signing.SIGV4_ALWAYS,
@@ -58,7 +57,7 @@ export class F3RVAStackScheduleApi extends cdk.Stack {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // CloudFront Distribution mapping api.dev.f3rva.org / api.f3rva.org with edge caching
-    const cfDistributionName = `${appName}-${envName}-schedule-api-distribution`;
+    const cfDistributionName = `${appName}-${envName}-schedule-distribution`;
     const cfDistribution = new cloudfront.Distribution(this, cfDistributionName, {
       domainNames: [apiDomainName],
       certificate,
@@ -89,7 +88,7 @@ export class F3RVAStackScheduleApi extends cdk.Stack {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Route53 Alias Record pointing api.dev.f3rva.org -> CloudFront Distribution
-    const aRecordName = `${appName}-${envName}-schedule-api-aRecord`;
+    const aRecordName = `${appName}-${envName}-schedule-aRecord`;
     new route53.ARecord(this, aRecordName, {
       zone: hostedZone,
       recordName: 'api',

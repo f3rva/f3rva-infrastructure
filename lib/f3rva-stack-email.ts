@@ -100,8 +100,8 @@ export class F3RVAStackEmail extends cdk.Stack {
       environment: {
         EMAIL_DESTINATION: adminEmailDestination
       },
-      code: lambda.Code.fromAsset("src/api/email/forward"),
-      handler: 'forward.lambda_handler',
+      code: lambda.Code.fromAsset("src/lambda/email_forward"),
+      handler: 'handler.handler',
       runtime: lambda.Runtime.PYTHON_3_12,
       initialPolicy: [
         new iam.PolicyStatement({
