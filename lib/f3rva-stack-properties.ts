@@ -20,7 +20,9 @@ export interface F3RVAStackProps extends F3RVAStackBaseProps {
     adminEmailDestination: string,
     baseDomain: string,
     bdDomainName: string,
-    webDomainName: string
+    webDomainName: string,
+    apiDomainName: string,
+    f3rvaRegionId: string
 }
 
 export interface F3RVAStackDNSProps extends F3RVAStackBaseProps {

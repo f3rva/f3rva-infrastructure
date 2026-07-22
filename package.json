@@ -2,7 +2,7 @@
   "name": "f3rva-infrastructure",
   "version": "0.1.0",
   "bin": {
-    "f3rva-infrastructure": "bin/f3rva-infrastructure.js"
+    "f3rva-infrastructure": "dist/bin/f3rva-infrastructure.js"
   },
   "scripts": {
     "build": "tsc",

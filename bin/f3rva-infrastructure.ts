@@ -8,6 +8,7 @@ import { F3RVAStackEmail } from '../lib/f3rva-stack-email';
 import { F3RVAStackCertificates } from '../lib/f3rva-stack-certificates';
 import { F3RVAStackS3 } from '../lib/f3rva-stack-s3';
 import { F3RVAStackSecurity } from '../lib/f3rva-stack-security';
+import { F3RVAStackScheduleApi } from '../lib/f3rva-stack-schedule-api';
 
 const app = new cdk.App();
 
@@ -65,7 +66,9 @@ const devStackProperties: F3RVAStackProps = {
   adminEmailDestination: "f3rva.corporate.dev@gmail.com",
   baseDomain: "dev.f3rva.org",
   bdDomainName: "bigdata.dev.f3rva.org",
-  webDomainName: "www.dev.f3rva.org"
+  webDomainName: "www.dev.f3rva.org",
+  apiDomainName: "api.dev.f3rva.org",
+  f3rvaRegionId: "25240"
 }
 
 const prodStackProperties: F3RVAStackProps = { 
@@ -84,7 +87,9 @@ const prodStackProperties: F3RVAStackProps = {
   adminEmailDestination: "f3rva.corporate.prod@gmail.com",
   baseDomain: "f3rva.org",
   bdDomainName: "bigdata.f3rva.org",
-  webDomainName: "www.f3rva.org"
+  webDomainName: "www.f3rva.org",
+  apiDomainName: "api.f3rva.org",
+  f3rvaRegionId: "25240"
 }
 
 // dev stack
@@ -93,6 +98,7 @@ const devEmailStack = new F3RVAStackEmail(app, "F3RVA-email-dev", devStackProper
 const devCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", devStackProperties);
 const devSecurityStack = new F3RVAStackSecurity(app, "F3RVA-security-dev", devStackProperties);
 const devS3Stack = new F3RVAStackS3(app, "F3RVA-s3-dev", devStackProperties);
+const devScheduleApiStack = new F3RVAStackScheduleApi(app, "F3RVA-schedule-api-dev", devStackProperties);
 
 // prod stack
 const prodDnsStack = new F3RVAStackDNS(app, "F3RVA-dns-prod", prodStackDNSProperties);
@@ -100,3 +106,4 @@ const prodEmailStack = new F3RVAStackEmail(app, "F3RVA-email-prod", prodStackPro
 const prodCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-prod", prodStackProperties);
 const prodSecurityStack = new F3RVAStackSecurity(app, "F3RVA-security-prod", prodStackProperties);
 const prodS3Stack = new F3RVAStackS3(app, "F3RVA-s3-prod", prodStackProperties);
+const prodScheduleApiStack = new F3RVAStackScheduleApi(app, "F3RVA-schedule-api-prod", prodStackProperties);
