@@ -1,8 +1,16 @@
 !jest.config.js
 *.d.ts
 node_modules
+dist
 
 # CDK asset staging directory
 .cdk.staging
 cdk.out
 cdk.context.json
+
+# Python bytecode and testing cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/

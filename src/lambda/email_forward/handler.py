@@ -16,31 +16,30 @@ def get_value_from_header(headers, key):
   
   return value
 
-def lambda_handler(event, context):
-  # Get the SNS message body
-  incoming_message = event['Records'][0]['Sns']['Message']
-  recipient = os.environ.get('EMAIL_DESTINATION')
-  
-  # Parse the JSON message
-  message_data = json.loads(incoming_message)
-  
-  # extract key fields from the list of headers
-  headers = message_data['mail']['headers']
-  sender = get_value_from_header(headers, 'From')
-  receiver = get_value_from_header(headers, 'To')
-  subject = get_value_from_header(headers, 'Subject')
-  print(f"Inbound message")
-  print(f"From: {sender}")
-  print(f"To: {receiver}")
-  print(f"Subject: {subject}")
-  
-  # the decoded content is in raw email format
-  decoded_content = base64.b64decode(message_data['content'])
-  raw_email = email.message_from_bytes(decoded_content, policy=default_policy)
-  body = raw_email.get_body(preferencelist=('html', 'body'))
-
-  # forward the email out  
+def handler(event, context):
   try:
+    # Get the SNS message body
+    incoming_message = event['Records'][0]['Sns']['Message']
+    recipient = os.environ.get('EMAIL_DESTINATION')
+    
+    # Parse the JSON message
+    message_data = json.loads(incoming_message)
+    
+    # extract key fields from the list of headers
+    headers = message_data['mail']['headers']
+    sender = get_value_from_header(headers, 'From')
+    receiver = get_value_from_header(headers, 'To')
+    subject = get_value_from_header(headers, 'Subject')
+    print(f"Inbound message")
+    print(f"From: {sender}")
+    print(f"To: {receiver}")
+    print(f"Subject: {subject}")
+    
+    # the decoded content is in raw email format
+    decoded_content = base64.b64decode(message_data['content'])
+    raw_email = email.message_from_bytes(decoded_content, policy=default_policy)
+    body = raw_email.get_body(preferencelist=('html', 'body'))
+
     # Create the new email content
     new_email_subject = f"[Forwarded from {sender} to {receiver}] {subject}"
 
@@ -79,4 +78,3 @@ def lambda_handler(event, context):
   
   except json.JSONDecodeError as e:
     print("Error parsing JSON:", e)
-  
