@@ -7,3 +7,10 @@ dist
 .cdk.staging
 cdk.out
 cdk.context.json
+
+# Python bytecode and testing cache
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache/

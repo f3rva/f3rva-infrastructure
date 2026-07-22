@@ -85,6 +85,11 @@ class TestScheduleFetchHandler(unittest.TestCase):
         self.assertEqual(len(body["1stF"]), 1)
         self.assertEqual(body["1stF"][0]["name"], "DaPile")
 
+        # Verify the requested URL contains sorting parameters
+        called_req = mock_urlopen.call_args[0][0]
+        self.assertIn("sorting[0][id]=dayOfWeek", called_req.full_url)
+        self.assertIn("sorting[1][id]=parent", called_req.full_url)
+
     @patch.dict(os.environ, {}, clear=True)
     @patch.object(schedule_handler, "get_api_key", return_value=None)
     def test_handler_missing_api_key(self, mock_get_key):

@@ -112,7 +112,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             "body": json.dumps({"error": "F3 Nation API Key not configured"}),
         }
 
-    api_url = f"https://api.f3nation.com/v1/event?regionIds={region_id}&statuses=active&pageSize=200"
+    api_url = f"https://api.f3nation.com/v1/event?regionIds={region_id}&statuses=active&pageSize=200&sorting[0][id]=dayOfWeek&sorting[0][desc]=&sorting[1][id]=parent&sorting[1][desc]="
     req = urllib.request.Request(
         api_url,
         headers={
