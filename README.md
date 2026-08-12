@@ -1,27 +1,28 @@
 # F3RVA Infrastructure
 
-This is a CDK based project to build all required AWS infrastructure for both the website and bigdata.
-
-WIP.
+This is a CDK based project to build all required AWS infrastructure for both the website, bigdata, and REST APIs.
 
 ## Setup
 Execution of these stacks requires environment variables defined in your shell environment
-(e.g. .zshrc).  The environment variables should be defined as follows:
+(e.g. `.zshrc`). The environment variables should be defined as follows:
 
-`F3RVA_ACCOUNT_DEV=123456789012`
-`F3RVA_ACCOUNT_PROD=987654321098`
+```bash
+export F3RVA_ACCOUNT_DEV=123456789012
+export F3RVA_ACCOUNT_PROD=987654321098
+```
 
 ## Stack specific examples
 
 * `cdk deploy F3RVA-network-dev`                                                              deploy the VPC and supporting network
+* `cdk deploy F3RVA-api-dev`                                                                  deploy the unified REST API & CloudFront distribution
 * `cdk deploy F3RVA-wordpress-dev`                                                            deploy the wordpress dev stack
 * `cdk deploy F3RVA-wordpress-dev --parameters F3RVA-wordpress-dev:branch=feature/rds-stack`  deploy the wordpress dev stack by pulling from a branch (helpful for testing purposes)
 
 ## Profiles
 * `aws configure sso`                                 configures SSO for authenticating in cdk
 * `aws sso login`                                     logs in after session expiration
-* `cdk deploy F3RVA-network-dev --profile f3rva-dev`  deploy using dev credentials
-* `cdk deploy F3RVA-network-dev --profile f3rva-prod` deploy using prod credentials
+* `cdk deploy F3RVA-api-dev --profile f3rva-dev`      deploy using dev credentials
+* `cdk deploy F3RVA-api-prod --profile f3rva-prod`    deploy using prod credentials
 
 ## Other useful commands
 
@@ -32,66 +33,123 @@ Execution of these stacks requires environment variables defined in your shell e
 * `cdk diff`        compare deployed stack with current state
 * `cdk synth`       emits the synthesized CloudFormation template
 
-## Notes on each stack
+---
 
-### DNS
-This stack creates the Route53 hosted zones to support DNS.  This currently just creates the hosted zone and adds an MX record to receive emails.  Any other DNS needs should be setup in the appropriate stacks.  E.g., if we need a DNS for a web server, add it to the web server stack.
+## AWS Systems Manager (SSM) Parameter Store Configuration
 
-Until everything is migrated over to AWS, there is an A record manually added to Route53 to delegate to another server.  This will need to be removed when necessary.
+The REST API (`f3rva-api`) strictly follows 12-factor architecture and loads secrets and configuration from AWS SSM Parameter Store. The following parameters must be provisioned in your AWS account for each environment (`dev` and `prod`):
 
-### Email
-This is the stack to setup SES for sending and receiving emails.  We receive emails as we do not have an email provider setup (nor do we need one).  There is simple routing to receive emails in SES and then route them to an SNS topic, subscribed to by a Lambda service, and then forwarded out to a preconfigured email.  This allows us to receive emails for the given domain and forward them to a predefined output email.  
+### Required SSM Parameters
 
-Sounds complex but it really isn't
-* SES Receives email -> drops on SNS topic -> subscribed to from Lambda -> sends email back out
+| Parameter Name (SSM Path) | Type | Purpose | Example Value (`dev`) | Example Value (`prod`) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`/f3rva/{env}/database_url`** | `SecureString` | Full MySQL connection string with PyMySQL driver | `mysql+pymysql://app_user:pass@f3rva-dev.xyz.us-east-1.rds.amazonaws.com:3306/f3rva_bd?charset=utf8mb4` | `mysql+pymysql://app_user:pass@f3rva-prod.xyz.us-east-1.rds.amazonaws.com:3306/f3rva_bd?charset=utf8mb4` |
+| **`/f3rva/{env}/jwt_secret_key`** | `SecureString` | 32+ character cryptographic secret for signing 24h JWT tokens | `dev-secret-key-32-chars-long-abc12345` | `prod-super-secure-random-jwt-key-987654` |
+| **`/f3rva/{env}/admin_username`** | `String` | Username for admin authentication endpoint (`POST /v2/admin/login`) | `admin` | `admin` (or custom) |
+| **`/f3rva/{env}/admin_password`** | `SecureString` | Password for admin authentication endpoint (`POST /v2/admin/login`) | `dev-admin-password-123!` | `prod-admin-strong-password-456#` |
+| **`/f3rva/{env}/f3nation_api_key`** | `SecureString` | Upstream API key for `api.f3nation.com` *(Existing parameter)* | `f3nation-dev-api-key` | `f3nation-prod-api-key` |
+| **`/f3rva/{env}/f3_region_id`** *(Optional)* | `String` | Region ID for Richmond VA (defaults to `25240`) | `25240` | `25240` |
 
-Identify verification of the domain and any email addresses need to be done manually as it requires specific CNAME records or email verification.  See SES documentation for this info.
+### AWS CLI Helper Commands to Create Parameters
 
-One small note on troubleshooting.  If the SES instance isn't in "production mode" then the behavior for sending emails is a little different, and may not work for your use case.  Make sure SES is enabled for "production access" by following the SES instructions.
+#### Development Environment (`dev`):
+```bash
+# 1. Database Connection URL
+aws ssm put-parameter \
+  --name "/f3rva/dev/database_url" \
+  --value "mysql+pymysql://<user>:<password>@<dev-rds-host>:3306/f3rva_bd?charset=utf8mb4" \
+  --type "SecureString" \
+  --overwrite
 
-If we ever really have more complex email needs, it's all here, just need to configure it.
+# 2. JWT Signing Key (Generate a random 32-character string)
+aws ssm put-parameter \
+  --name "/f3rva/dev/jwt_secret_key" \
+  --value "$(openssl rand -hex 32)" \
+  --type "SecureString" \
+  --overwrite
 
-### Network
-This creates the VPC infrastructure for everything else in the account that needs it.  Only the core networking should go here, any dependent service needs should be in that specific stack.
+# 3. Admin Username & Password
+aws ssm put-parameter \
+  --name "/f3rva/dev/admin_username" \
+  --value "admin" \
+  --type "String" \
+  --overwrite
 
-### Certificates
-This stack creates the baseline certificates needed for each domain.  The wildcard certificate is currently the only certificate created.
+aws ssm put-parameter \
+  --name "/f3rva/dev/admin_password" \
+  --value "your-secure-dev-password" \
+  --type "SecureString" \
+  --overwrite
 
-### Storage
-This stack creates the filesystem needs for the environment.  Wordpress requires persistent storage to be maintained across stack recreation so we will manage this in EFS.
-
-### EC2
-A prerequisite for creating the EC2s is to create a key pair to allow SSH access after creation.  Use the following command to create the key pair via the CLI, this outputs the private key which you will have to save in a .pem file.  If you don't save it, you will have to create a new key pair.
-
-* `aws ec2 create-key-pair --key-name f3rva-dev-wordpress-key-pair --key-type rsa --key-format pem --region us-east-1 --profile f3rva-dev`
-* save it in a .pem file
-* `chmod 400 *.pem`
-
-## Python Lambda API Conventions
-
-To maintain a consistent pattern for backend APIs and serverless workflows, all Python Lambda functions must adhere to the following naming and directory conventions:
-
-### 1. Directory Structure
-All Lambda function code is housed under `src/lambda/`, grouped by domain and action in snake_case format (`<domain>_<action>/`):
-```text
-src/
-└── lambda/
-    ├── email_forward/
-    │   ├── handler.py           # Standardized entry point
-    │   └── requirements.txt     # Local dependencies (if any)
-    └── schedule_fetch/
-        ├── handler.py
-        └── requirements.txt
+# 4. F3 Nation API Key (if not already present)
+aws ssm put-parameter \
+  --name "/f3rva/dev/f3nation_api_key" \
+  --value "your-f3-nation-api-key" \
+  --type "SecureString" \
+  --overwrite
 ```
 
-### 2. Standard Code Patterns
-* **Filename**: The main entry point file must be named `handler.py`.
-* **Handler Name**: The entry function name must be `handler` (i.e. `def handler(event, context):`).
+#### Production Environment (`prod`):
+```bash
+# 1. Database Connection URL
+aws ssm put-parameter \
+  --name "/f3rva/prod/database_url" \
+  --value "mysql+pymysql://<user>:<password>@<prod-rds-host>:3306/f3rva_bd?charset=utf8mb4" \
+  --type "SecureString" \
+  --overwrite
 
-### 3. Unit Testing
-Every Lambda function must have a corresponding test suite under `test/lambda/` matching the pattern `test_<domain>_<action>.py`:
-* **Filename**: `test/lambda/test_<domain>_<action>.py`
-* **Execution**: To run the suite directly:
-  ```bash
-  python3 test/lambda/test_<domain>_<action>.py
-  ```
+# 2. JWT Signing Key
+aws ssm put-parameter \
+  --name "/f3rva/prod/jwt_secret_key" \
+  --value "$(openssl rand -hex 32)" \
+  --type "SecureString" \
+  --overwrite
+
+# 3. Admin Username & Password
+aws ssm put-parameter \
+  --name "/f3rva/prod/admin_username" \
+  --value "admin" \
+  --type "String" \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/f3rva/prod/admin_password" \
+  --value "your-strong-prod-password" \
+  --type "SecureString" \
+  --overwrite
+
+# 4. F3 Nation API Key
+aws ssm put-parameter \
+  --name "/f3rva/prod/f3nation_api_key" \
+  --value "your-f3-nation-api-key" \
+  --type "SecureString" \
+  --overwrite
+```
+
+---
+
+## Notes on each stack
+
+### API (`F3RVAStackApi`)
+This stack creates the unified REST API infrastructure for F3 RVA:
+* **API Lambda Function** (`f3rva-{env}-api-lambda`): Python 3.13 / ARM64 execution environment running the FastAPI application via the Mangum ASGI adapter. Read access to `/f3rva/{env}/*` in SSM Parameter Store is automatically granted.
+* **CloudFront Distribution**: Custom domain (`api.dev.f3rva.org` / `api.f3rva.org`) backed by the wildcard ACM certificate. Routes all traffic directly to the Lambda Function URL via Origin Access Control (OAC) with SigV4 signing.
+* **Route53 DNS**: Creates an alias A-record pointing the `api` subdomain to the CloudFront distribution.
+
+### DNS
+This stack creates the Route53 hosted zones to support DNS. This currently creates the hosted zone and adds an MX record to receive emails.
+
+### Email
+This is the stack to setup SES for sending and receiving emails. There is simple routing to receive emails in SES and then route them to an SNS topic, subscribed to by a Lambda service, and then forwarded out to a preconfigured email.
+
+### Network
+This creates the VPC infrastructure for everything else in the account that needs it.
+
+### Certificates
+This stack creates the baseline wildcard certificates needed for each domain.
+
+### Storage
+This stack creates the filesystem needs for WordPress (EFS persistent storage).
+
+### EC2
+A prerequisite for creating the EC2s is to create a key pair to allow SSH access after creation.
