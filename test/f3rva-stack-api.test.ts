@@ -2,10 +2,10 @@ import { describe, it } from '@jest/globals';
 import * as cdk from 'aws-cdk-lib';
 import { Template, Match } from 'aws-cdk-lib/assertions';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { F3RVAStackSchedule } from '../lib/f3rva-stack-schedule';
+import { F3RVAStackApi } from '../lib/f3rva-stack-api';
 import { F3RVAStackProps, F3RVAStackDNSProps } from '../lib/f3rva-stack-properties';
 
-describe('F3RVAStackSchedule', () => {
+describe('F3RVAStackApi', () => {
   const env = { account: '123456789012', region: 'us-east-1' };
   const dnsProps: F3RVAStackDNSProps = {
     env,
@@ -36,19 +36,21 @@ describe('F3RVAStackSchedule', () => {
     f3rvaRegionId: '25240',
   };
 
-  it('creates Lambda function with Python 3.13 runtime and correct environment variables', () => {
+  it('creates API Lambda function with Python 3.13 runtime, ARM64 architecture, and SSM permissions', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::Lambda::Function', {
       Runtime: 'python3.13',
-      Handler: 'handler.handler',
+      Architectures: ['arm64'],
+      Handler: 'src.main.handler',
+      MemorySize: 512,
+      Timeout: 30,
       Environment: {
         Variables: Match.objectLike({
-          F3_REGION_ID: '25240',
-          CLIENT_ID: 'f3rva-website',
-          SSM_PARAM_NAME: '/f3rva/dev/f3nation_api_key',
+          ENVIRONMENT: 'dev',
+          APP_NAME: 'F3 RVA API',
         }),
       },
     });
@@ -56,7 +58,7 @@ describe('F3RVAStackSchedule', () => {
 
   it('creates Lambda Function URL with authType AWS_IAM', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::Lambda::Url', {
@@ -66,7 +68,7 @@ describe('F3RVAStackSchedule', () => {
 
   it('creates CloudFront OriginAccessControl for Lambda URL', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::CloudFront::OriginAccessControl', {
@@ -78,9 +80,9 @@ describe('F3RVAStackSchedule', () => {
     });
   });
 
-  it('creates CloudFront Distribution with custom domain api.dev.f3rva.org', () => {
+  it('creates CloudFront Distribution with custom domain api.dev.f3rva.org and caching disabled', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::CloudFront::Distribution', {
@@ -92,7 +94,7 @@ describe('F3RVAStackSchedule', () => {
 
   it('creates Route53 ARecord alias for api.dev.f3rva.org', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::Route53::RecordSet', {
@@ -103,7 +105,7 @@ describe('F3RVAStackSchedule', () => {
 
   it('grants CloudFront OAC invoke permissions on the Lambda function', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasResourceProperties('AWS::Lambda::Permission', {
@@ -117,12 +119,14 @@ describe('F3RVAStackSchedule', () => {
     });
   });
 
-  it('outputs ScheduleApiUrl and ScheduleApiCustomDomainUrl', () => {
+  it('outputs ApiLambdaFunctionName, ApiLambdaFunctionUrl, ApiCustomDomainUrl, and CloudFrontDistributionId', () => {
     const app = new cdk.App();
-    const stack = new F3RVAStackSchedule(app, 'TestScheduleStack', stackProps);
+    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
-    template.hasOutput('ScheduleApiUrl', {});
-    template.hasOutput('ScheduleApiCustomDomainUrl', {});
+    template.hasOutput('ApiLambdaFunctionName', {});
+    template.hasOutput('ApiLambdaFunctionUrl', {});
+    template.hasOutput('ApiCustomDomainUrl', {});
+    template.hasOutput('CloudFrontDistributionId', {});
   });
 });

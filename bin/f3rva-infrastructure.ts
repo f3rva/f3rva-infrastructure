@@ -8,7 +8,6 @@ import { F3RVAStackEmail } from '../lib/f3rva-stack-email';
 import { F3RVAStackCertificates } from '../lib/f3rva-stack-certificates';
 import { F3RVAStackS3 } from '../lib/f3rva-stack-s3';
 import { F3RVAStackSecurity } from '../lib/f3rva-stack-security';
-import { F3RVAStackSchedule } from '../lib/f3rva-stack-schedule';
 import { F3RVAStackApi } from '../lib/f3rva-stack-api';
 
 const app = new cdk.App();
@@ -99,7 +98,6 @@ const devEmailStack = new F3RVAStackEmail(app, "F3RVA-email-dev", devStackProper
 const devCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-dev", devStackProperties);
 const devSecurityStack = new F3RVAStackSecurity(app, "F3RVA-security-dev", devStackProperties);
 const devS3Stack = new F3RVAStackS3(app, "F3RVA-s3-dev", devStackProperties);
-const devScheduleStack = new F3RVAStackSchedule(app, "F3RVA-schedule-dev", devStackProperties); // Retained for clean destroy
 const devApiStack = new F3RVAStackApi(app, "F3RVA-api-dev", devStackProperties);
 
 // prod stacks
@@ -108,5 +106,4 @@ const prodEmailStack = new F3RVAStackEmail(app, "F3RVA-email-prod", prodStackPro
 const prodCertificatesStack = new F3RVAStackCertificates(app, "F3RVA-certificates-prod", prodStackProperties);
 const prodSecurityStack = new F3RVAStackSecurity(app, "F3RVA-security-prod", prodStackProperties);
 const prodS3Stack = new F3RVAStackS3(app, "F3RVA-s3-prod", prodStackProperties);
-const prodScheduleStack = new F3RVAStackSchedule(app, "F3RVA-schedule-prod", prodStackProperties); // Retained for clean destroy
 const prodApiStack = new F3RVAStackApi(app, "F3RVA-api-prod", prodStackProperties);
