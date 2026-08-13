@@ -29,9 +29,17 @@ export class F3RVAStackSecurity extends cdk.Stack {
     cdk.Tags.of(oidcProvider).add('Name', `${appName}-${envName}-${oidcProviderName}`);
 
     // create the principal with the required conditions
+    // these are the repositories that are allowed to assume the role
+    // the format is: repo:{owner}/{repo}:{ref}
+    // multiple entries are added for each repository since GH changed the way it identifies the 
+    // repository in the OIDC token. The first entry is the old format, the second is the new.
     const allowedRepositories = [
       'repo:f3rva/f3rva-slack-app:*',
+      'repo:f3rva@98359154/f3rva-slack-app@1246584821:*',
       'repo:f3rva/f3rva-website:*',
+      'repo:f3rva@98359154/f3rva-website@1045866134:*',
+      'repo:f3rva/f3rva-api:*',
+      'repo:f3rva@98359154/f3rva-api@1326968744:*',
     ];
     
     // create the conditions for the principal
