@@ -80,7 +80,7 @@ describe('F3RVAStackApi', () => {
     });
   });
 
-  it('creates CloudFront Distribution with custom domain api.dev.f3rva.org and caching disabled', () => {
+  it('creates CloudFront Distribution with custom domain api.dev.f3rva.org, caching disabled by default, and /schedule cached with CORS support', () => {
     const app = new cdk.App();
     const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
@@ -88,6 +88,14 @@ describe('F3RVAStackApi', () => {
     template.hasResourceProperties('AWS::CloudFront::Distribution', {
       DistributionConfig: Match.objectLike({
         Aliases: ['api.dev.f3rva.org'],
+        CacheBehaviors: [
+          Match.objectLike({
+            PathPattern: '/schedule',
+            ViewerProtocolPolicy: 'redirect-to-https',
+            AllowedMethods: Match.arrayWith(['GET', 'HEAD', 'OPTIONS']),
+            ResponseHeadersPolicyId: Match.anyValue(),
+          }),
+        ],
       }),
     });
   });

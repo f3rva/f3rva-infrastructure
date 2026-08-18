@@ -92,17 +92,29 @@ export class F3RVAStackApi extends cdk.Stack {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // CloudFront Distribution mapping api.dev.f3rva.org / api.f3rva.org (Single Unified Origin)
     const cfDistributionName = `${appName}-${envName}-api-distribution`;
+    const lambdaOrigin = origins.FunctionUrlOrigin.withOriginAccessControl(apiLambdaUrl, {
+      originAccessControl: oac,
+    });
+
     const cfDistribution = new cloudfront.Distribution(this, cfDistributionName, {
       domainNames: [apiDomainName],
       certificate,
       defaultBehavior: {
-        origin: origins.FunctionUrlOrigin.withOriginAccessControl(apiLambdaUrl, {
-          originAccessControl: oac,
-        }),
+        origin: lambdaOrigin,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
         originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      },
+      additionalBehaviors: {
+        '/schedule': {
+          origin: lambdaOrigin,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+          responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.CORS_ALLOW_ALL_ORIGINS_WITH_PREFLIGHT,
+        },
       },
     });
     cdk.Tags.of(cfDistribution).add('Name', cfDistributionName);
