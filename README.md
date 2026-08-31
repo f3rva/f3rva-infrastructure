@@ -133,7 +133,8 @@ aws ssm put-parameter \
 ### API (`F3RVAStackApi`)
 This stack creates the unified REST API infrastructure for F3 RVA:
 * **API Lambda Function** (`f3rva-{env}-api-lambda`): Python 3.13 / ARM64 execution environment running the FastAPI application via the Mangum ASGI adapter. Read access to `/f3rva/{env}/*` in SSM Parameter Store is automatically granted.
-* **CloudFront Distribution**: Custom domain (`api.dev.f3rva.org` / `api.f3rva.org`) backed by the wildcard ACM certificate. Routes all traffic directly to the Lambda Function URL via Origin Access Control (OAC) with SigV4 signing.
+* **API Gateway HTTP API (v2)** (`f3rva-{env}-http-api`): Low-latency serverless HTTP API gateway providing native payload handling, proxy routing, and direct internal Lambda execution (`lambda:InvokeFunction`).
+* **CloudFront Distribution**: Custom domain (`api.dev.f3rva.org` / `api.f3rva.org`) backed by the wildcard ACM certificate. Routes dynamic REST requests to API Gateway with caching disabled, and optimizes `/schedule` with 1-hour edge caching.
 * **Route53 DNS**: Creates an alias A-record pointing the `api` subdomain to the CloudFront distribution.
 
 ### DNS
