@@ -1,4 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
+import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
+import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations';
 import * as cm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -64,9 +66,12 @@ export class F3RVAStackApi extends cdk.Stack {
     });
     apiLambda.addToRolePolicy(ssmPolicy);
 
-    // Create Function URL with AWS_IAM auth (requests signed via SigV4 by CloudFront OAC)
-    const apiLambdaUrl = apiLambda.addFunctionUrl({
-      authType: lambda.FunctionUrlAuthType.AWS_IAM,
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // API Gateway HTTP API (v2) with Lambda Proxy Integration
+    const httpApiName = `${appName}-${envName}-http-api`;
+    const httpApi = new apigwv2.HttpApi(this, httpApiName, {
+      apiName: httpApiName,
+      defaultIntegration: new HttpLambdaIntegration('ApiLambdaIntegration', apiLambda),
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,25 +87,15 @@ export class F3RVAStackApi extends cdk.Stack {
     });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Create CloudFront FunctionUrlOriginAccessControl (OAC) to sign requests via SigV4
-    const oacName = `${appName}-${envName}-api-oac`;
-    const oac = new cloudfront.FunctionUrlOriginAccessControl(this, oacName, {
-      originAccessControlName: oacName,
-      signing: cloudfront.Signing.SIGV4_ALWAYS,
-    });
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////
     // CloudFront Distribution mapping api.dev.f3rva.org / api.f3rva.org (Single Unified Origin)
     const cfDistributionName = `${appName}-${envName}-api-distribution`;
-    const lambdaOrigin = origins.FunctionUrlOrigin.withOriginAccessControl(apiLambdaUrl, {
-      originAccessControl: oac,
-    });
+    const apiOrigin = new origins.HttpOrigin(`${httpApi.apiId}.execute-api.${region}.amazonaws.com`);
 
     const cfDistribution = new cloudfront.Distribution(this, cfDistributionName, {
       domainNames: [apiDomainName],
       certificate,
       defaultBehavior: {
-        origin: lambdaOrigin,
+        origin: apiOrigin,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
@@ -108,7 +103,7 @@ export class F3RVAStackApi extends cdk.Stack {
       },
       additionalBehaviors: {
         '/schedule': {
-          origin: lambdaOrigin,
+          origin: apiOrigin,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
@@ -118,19 +113,6 @@ export class F3RVAStackApi extends cdk.Stack {
       },
     });
     cdk.Tags.of(cfDistribution).add('Name', cfDistributionName);
-
-    // Grant CloudFront OAC permission to invoke the Lambda Function URL via resource policy
-    apiLambda.addPermission('AllowCloudFrontOAC', {
-      principal: new iam.ServicePrincipal('cloudfront.amazonaws.com'),
-      action: 'lambda:InvokeFunctionUrl',
-      sourceArn: `arn:aws:cloudfront::${accountNumber}:distribution/${cfDistribution.distributionId}`,
-    });
-
-    apiLambda.addPermission('AllowCloudFrontOACInvoke', {
-      principal: new iam.ServicePrincipal('cloudfront.amazonaws.com'),
-      action: 'lambda:InvokeFunction',
-      sourceArn: `arn:aws:cloudfront::${accountNumber}:distribution/${cfDistribution.distributionId}`,
-    });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Route53 Alias Record pointing api.dev.f3rva.org -> CloudFront Distribution
@@ -181,9 +163,14 @@ export class F3RVAStackApi extends cdk.Stack {
       exportName: `${appName}-${envName}-ApiLambdaFunctionName`,
     });
 
-    new cdk.CfnOutput(this, 'ApiLambdaFunctionUrl', {
-      value: apiLambdaUrl.url,
-      exportName: `${appName}-${envName}-ApiLambdaFunctionUrl`,
+    new cdk.CfnOutput(this, 'HttpApiUrl', {
+      value: httpApi.url ?? `https://${httpApi.apiId}.execute-api.${region}.amazonaws.com`,
+      exportName: `${appName}-${envName}-HttpApiUrl`,
+    });
+
+    new cdk.CfnOutput(this, 'HttpApiId', {
+      value: httpApi.apiId,
+      exportName: `${appName}-${envName}-HttpApiId`,
     });
 
     new cdk.CfnOutput(this, 'ApiCustomDomainUrl', {

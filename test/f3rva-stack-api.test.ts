@@ -56,27 +56,19 @@ describe('F3RVAStackApi', () => {
     });
   });
 
-  it('creates Lambda Function URL with authType AWS_IAM', () => {
+  it('creates API Gateway HTTP API v2 with Lambda proxy integration', () => {
     const app = new cdk.App();
     const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
-    template.hasResourceProperties('AWS::Lambda::Url', {
-      AuthType: 'AWS_IAM',
+    template.hasResourceProperties('AWS::ApiGatewayV2::Api', {
+      Name: 'f3rva-dev-http-api',
+      ProtocolType: 'HTTP',
     });
-  });
 
-  it('creates CloudFront OriginAccessControl for Lambda URL', () => {
-    const app = new cdk.App();
-    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
-    const template = Template.fromStack(stack);
-
-    template.hasResourceProperties('AWS::CloudFront::OriginAccessControl', {
-      OriginAccessControlConfig: {
-        OriginAccessControlOriginType: 'lambda',
-        SigningBehavior: 'always',
-        SigningProtocol: 'sigv4',
-      },
+    template.hasResourceProperties('AWS::ApiGatewayV2::Integration', {
+      IntegrationType: 'AWS_PROXY',
+      PayloadFormatVersion: '2.0',
     });
   });
 
@@ -111,29 +103,14 @@ describe('F3RVAStackApi', () => {
     });
   });
 
-  it('grants CloudFront OAC invoke permissions on the Lambda function', () => {
-    const app = new cdk.App();
-    const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
-    const template = Template.fromStack(stack);
-
-    template.hasResourceProperties('AWS::Lambda::Permission', {
-      Action: 'lambda:InvokeFunctionUrl',
-      Principal: 'cloudfront.amazonaws.com',
-    });
-
-    template.hasResourceProperties('AWS::Lambda::Permission', {
-      Action: 'lambda:InvokeFunction',
-      Principal: 'cloudfront.amazonaws.com',
-    });
-  });
-
-  it('outputs ApiLambdaFunctionName, ApiLambdaFunctionUrl, ApiCustomDomainUrl, and CloudFrontDistributionId', () => {
+  it('outputs ApiLambdaFunctionName, HttpApiUrl, HttpApiId, ApiCustomDomainUrl, and CloudFrontDistributionId', () => {
     const app = new cdk.App();
     const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
 
     template.hasOutput('ApiLambdaFunctionName', {});
-    template.hasOutput('ApiLambdaFunctionUrl', {});
+    template.hasOutput('HttpApiUrl', {});
+    template.hasOutput('HttpApiId', {});
     template.hasOutput('ApiCustomDomainUrl', {});
     template.hasOutput('CloudFrontDistributionId', {});
   });
