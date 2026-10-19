@@ -36,7 +36,7 @@ describe('F3RVAStackApi', () => {
     f3rvaRegionId: '25240',
   };
 
-  it('creates API Lambda function with Python 3.13 runtime, ARM64 architecture, and SSM permissions', () => {
+  it('creates API Lambda function with Python 3.13 runtime, ARM64 architecture, SSM and SES permissions', () => {
     const app = new cdk.App();
     const stack = new F3RVAStackApi(app, 'TestApiStack', stackProps);
     const template = Template.fromStack(stack);
@@ -52,6 +52,19 @@ describe('F3RVAStackApi', () => {
           ENVIRONMENT: 'dev',
           APP_NAME: 'F3 RVA API',
         }),
+      },
+    });
+
+    template.hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          Match.objectLike({
+            Sid: 'AllowSESSendEmail',
+            Effect: 'Allow',
+            Action: ['ses:SendEmail', 'ses:SendRawEmail'],
+            Resource: '*',
+          }),
+        ]),
       },
     });
   });

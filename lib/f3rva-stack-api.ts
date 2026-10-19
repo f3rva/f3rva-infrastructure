@@ -66,6 +66,15 @@ export class F3RVAStackApi extends cdk.Stack {
     });
     apiLambda.addToRolePolicy(ssmPolicy);
 
+    // Grant SES SendEmail access for outbound alias request and approval notifications
+    const sesPolicy = new iam.PolicyStatement({
+      sid: 'AllowSESSendEmail',
+      effect: iam.Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: ['*'],
+    });
+    apiLambda.addToRolePolicy(sesPolicy);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // API Gateway HTTP API (v2) with Lambda Proxy Integration
     const httpApiName = `${appName}-${envName}-http-api`;
