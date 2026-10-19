@@ -47,6 +47,7 @@ The REST API (`f3rva-api`) strictly follows 12-factor architecture and loads sec
 | **`/f3rva/{env}/jwt_secret_key`** | `SecureString` | 32+ character cryptographic secret for signing 24h JWT tokens | `dev-secret-key-32-chars-long-abc12345` | `prod-super-secure-random-jwt-key-987654` |
 | **`/f3rva/{env}/admin_username`** | `String` | Username for admin authentication endpoint (`POST /v2/admin/login`) | `admin` | `admin` (or custom) |
 | **`/f3rva/{env}/admin_password`** | `SecureString` | Password for admin authentication endpoint (`POST /v2/admin/login`) | `dev-admin-password-123!` | `prod-admin-strong-password-456#` |
+| **`/f3rva/{env}/admin_email`** | `String` | Admin email address for AWS SES alias request & approval notifications | `admin@dev.f3rva.org` | `admin@f3rva.org` |
 | **`/f3rva/{env}/f3nation_api_key`** | `SecureString` | Upstream API key for `api.f3nation.com` *(Existing parameter)* | `f3nation-dev-api-key` | `f3nation-prod-api-key` |
 | **`/f3rva/{env}/f3_region_id`** *(Optional)* | `String` | Region ID for Richmond VA (defaults to `25240`) | `25240` | `25240` |
 
@@ -81,7 +82,14 @@ aws ssm put-parameter \
   --type "SecureString" \
   --overwrite
 
-# 4. F3 Nation API Key (if not already present)
+# 4. Admin Notification Email (SES)
+aws ssm put-parameter \
+  --name "/f3rva/dev/admin_email" \
+  --value "admin@dev.f3rva.org" \
+  --type "String" \
+  --overwrite
+
+# 5. F3 Nation API Key (if not already present)
 aws ssm put-parameter \
   --name "/f3rva/dev/f3nation_api_key" \
   --value "your-f3-nation-api-key" \
@@ -118,7 +126,14 @@ aws ssm put-parameter \
   --type "SecureString" \
   --overwrite
 
-# 4. F3 Nation API Key
+# 4. Admin Notification Email (SES)
+aws ssm put-parameter \
+  --name "/f3rva/prod/admin_email" \
+  --value "admin@f3rva.org" \
+  --type "String" \
+  --overwrite
+
+# 5. F3 Nation API Key
 aws ssm put-parameter \
   --name "/f3rva/prod/f3nation_api_key" \
   --value "your-f3-nation-api-key" \
@@ -132,7 +147,7 @@ aws ssm put-parameter \
 
 ### API (`F3RVAStackApi`)
 This stack creates the unified REST API infrastructure for F3 RVA:
-* **API Lambda Function** (`f3rva-{env}-api-lambda`): Python 3.13 / ARM64 execution environment running the FastAPI application via the Mangum ASGI adapter. Read access to `/f3rva/{env}/*` in SSM Parameter Store is automatically granted.
+* **API Lambda Function** (`f3rva-{env}-api-lambda`): Python 3.13 / ARM64 execution environment running the FastAPI application via the Mangum ASGI adapter. Read access to `/f3rva/{env}/*` in SSM Parameter Store and outbound email permissions (`ses:SendEmail`, `ses:SendRawEmail`) in AWS SES are automatically granted.
 * **API Gateway HTTP API (v2)** (`f3rva-{env}-http-api`): Low-latency serverless HTTP API gateway providing native payload handling, proxy routing, and direct internal Lambda execution (`lambda:InvokeFunction`).
 * **CloudFront Distribution**: Custom domain (`api.dev.f3rva.org` / `api.f3rva.org`) backed by the wildcard ACM certificate. Routes dynamic REST requests to API Gateway with caching disabled, and optimizes `/schedule` with 1-hour edge caching.
 * **Route53 DNS**: Creates an alias A-record pointing the `api` subdomain to the CloudFront distribution.
