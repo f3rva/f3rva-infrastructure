@@ -64,6 +64,21 @@ describe('F3RVAStackApi', () => {
             Action: ['ses:SendEmail', 'ses:SendRawEmail'],
             Resource: '*',
           }),
+          Match.objectLike({
+            Sid: 'AllowBedrockInvoke',
+            Effect: 'Allow',
+            Action: 'bedrock:InvokeModel',
+            Resource: [
+              'arn:aws:bedrock:*::foundation-model/anthropic.claude-*haiku*',
+              'arn:aws:bedrock:::foundation-model/anthropic.claude-*haiku*',
+              'arn:aws:bedrock:*::foundation-model/amazon.nova-*',
+              'arn:aws:bedrock:::foundation-model/amazon.nova-*',
+              'arn:aws:bedrock:us-east-1:123456789012:inference-profile/global.anthropic.claude-*haiku*',
+              'arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.anthropic.claude-*haiku*',
+              'arn:aws:bedrock:us-east-1:123456789012:inference-profile/global.amazon.nova-*',
+              'arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.amazon.nova-*',
+            ],
+          }),
         ]),
       },
     });

@@ -75,6 +75,24 @@ export class F3RVAStackApi extends cdk.Stack {
     });
     apiLambda.addToRolePolicy(sesPolicy);
 
+    // Grant Amazon Bedrock InvokeModel access for lightweight backblast summarization
+    const bedrockPolicy = new iam.PolicyStatement({
+      sid: 'AllowBedrockInvoke',
+      effect: iam.Effect.ALLOW,
+      actions: ['bedrock:InvokeModel'],
+      resources: [
+        'arn:aws:bedrock:*::foundation-model/anthropic.claude-*haiku*',
+        'arn:aws:bedrock:::foundation-model/anthropic.claude-*haiku*',
+        'arn:aws:bedrock:*::foundation-model/amazon.nova-*',
+        'arn:aws:bedrock:::foundation-model/amazon.nova-*',
+        `arn:aws:bedrock:${region}:${accountNumber}:inference-profile/global.anthropic.claude-*haiku*`,
+        `arn:aws:bedrock:${region}:${accountNumber}:inference-profile/us.anthropic.claude-*haiku*`,
+        `arn:aws:bedrock:${region}:${accountNumber}:inference-profile/global.amazon.nova-*`,
+        `arn:aws:bedrock:${region}:${accountNumber}:inference-profile/us.amazon.nova-*`,
+      ],
+    });
+    apiLambda.addToRolePolicy(bedrockPolicy);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // API Gateway HTTP API (v2) with Lambda Proxy Integration
     const httpApiName = `${appName}-${envName}-http-api`;
