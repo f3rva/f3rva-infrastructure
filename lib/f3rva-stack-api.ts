@@ -8,6 +8,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as scheduler from 'aws-cdk-lib/aws-scheduler';
 import * as targets from 'aws-cdk-lib/aws-route53-targets';
 import { Construct } from 'constructs';
 import { F3RVAStackProps } from './f3rva-stack-properties';
@@ -92,6 +93,43 @@ export class F3RVAStackApi extends cdk.Stack {
       ],
     });
     apiLambda.addToRolePolicy(bedrockPolicy);
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    // EventBridge Scheduler for Weekly #1st-f-fitness Digest (Sundays at 6:00 PM ET)
+    const schedulerRoleName = `${appName}-${envName}-apiSchedulerRole`;
+    const schedulerRole = new iam.Role(this, 'WeeklyDigestSchedulerRole', {
+      roleName: schedulerRoleName,
+      assumedBy: new iam.ServicePrincipal('scheduler.amazonaws.com'),
+      description: `Execution role for the EventBridge Scheduler weekly digest trigger in ${envName}`,
+    });
+    schedulerRole.addToPolicy(
+      new iam.PolicyStatement({
+        sid: 'AllowSchedulerInvokeApiLambda',
+        effect: iam.Effect.ALLOW,
+        actions: ['lambda:InvokeFunction'],
+        resources: [apiLambda.functionArn],
+      })
+    );
+
+    const weeklyDigestScheduleName = `${appName}-${envName}-weekly-digest`;
+    new scheduler.CfnSchedule(this, 'WeeklyDigestSchedule', {
+      name: weeklyDigestScheduleName,
+      description: `Scheduled Sunday evening weekly workout & announcement digest for ${appName} in ${envName}`,
+      flexibleTimeWindow: {
+        mode: 'OFF',
+      },
+      scheduleExpression: 'cron(0 18 ? * SUN *)',
+      scheduleExpressionTimezone: 'America/New_York',
+      state: envName === 'prod' ? 'ENABLED' : 'DISABLED',
+      target: {
+        arn: apiLambda.functionArn,
+        roleArn: schedulerRole.roleArn,
+        input: JSON.stringify({ _scheduled_task: 'weekly_digest' }),
+        retryPolicy: {
+          maximumRetryAttempts: 0,
+        },
+      },
+    });
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // API Gateway HTTP API (v2) with Lambda Proxy Integration
