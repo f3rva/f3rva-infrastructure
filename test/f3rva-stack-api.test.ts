@@ -142,4 +142,36 @@ describe('F3RVAStackApi', () => {
     template.hasOutput('ApiCustomDomainUrl', {});
     template.hasOutput('CloudFrontDistributionId', {});
   });
+
+  it('creates EventBridge Scheduler weekly digest rule targeting API Lambda (DISABLED in dev, ENABLED in prod)', () => {
+    const devApp = new cdk.App();
+    const devStack = new F3RVAStackApi(devApp, 'TestDevScheduleStack', stackProps);
+    const devTemplate = Template.fromStack(devStack);
+
+    devTemplate.hasResourceProperties('AWS::Scheduler::Schedule', {
+      Name: 'f3rva-dev-weekly-digest',
+      ScheduleExpression: 'cron(0 18 ? * SUN *)',
+      ScheduleExpressionTimezone: 'America/New_York',
+      State: 'DISABLED',
+      FlexibleTimeWindow: { Mode: 'OFF' },
+      Target: Match.objectLike({
+        Input: '{"_scheduled_task":"weekly_digest"}',
+        RetryPolicy: { MaximumRetryAttempts: 0 },
+      }),
+    });
+
+    const prodApp = new cdk.App();
+    const prodStack = new F3RVAStackApi(prodApp, 'TestProdScheduleStack', {
+      ...stackProps,
+      envName: 'prod',
+      baseDomain: 'f3rva.org',
+      apiDomainName: 'api.f3rva.org',
+    });
+    const prodTemplate = Template.fromStack(prodStack);
+
+    prodTemplate.hasResourceProperties('AWS::Scheduler::Schedule', {
+      Name: 'f3rva-prod-weekly-digest',
+      State: 'ENABLED',
+    });
+  });
 });

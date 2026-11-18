@@ -48,7 +48,9 @@ The REST API (`f3rva-api`) strictly follows 12-factor architecture and loads sec
 | **`/f3rva/{env}/admin_username`** | `String` | Username for admin authentication endpoint (`POST /v2/admin/login`) | `admin` | `admin` (or custom) |
 | **`/f3rva/{env}/admin_password`** | `SecureString` | Password for admin authentication endpoint (`POST /v2/admin/login`) | `dev-admin-password-123!` | `prod-admin-strong-password-456#` |
 | **`/f3rva/{env}/admin_email`** | `String` | Admin email address for AWS SES alias request & approval notifications | `admin@dev.f3rva.org` | `admin@f3rva.org` |
-| **`/f3rva/{env}/bedrock_model_id`** *(Optional)* | `String` | AWS Bedrock model or inference profile ID for AI backblast TL;DR summaries | `global.anthropic.claude-haiku-4-5-20251001-v1:0` | `global.anthropic.claude-haiku-4-5-20251001-v1:0` |
+| **`/f3rva/{env}/slack_fitness_channel_id`** *(Optional)* | `String` | Slack Channel ID for `#1st-f-fitness` weekly digest posts | `C_DEV_FITNESS` | `C_PROD_FITNESS` |
+| **`/f3rva/{env}/bedrock_model_id_post_teaser`** *(Optional)* | `String` | AWS Bedrock model or inference profile ID for per-post movie-trailer subtitles | `global.anthropic.claude-haiku-4-5-20251001-v1:0` | `global.anthropic.claude-haiku-4-5-20251001-v1:0` |
+| **`/f3rva/{env}/bedrock_model_id_weekly_digest`** *(Optional)* | `String` | AWS Bedrock model or inference profile ID for weekly `#1st-f-fitness` digests | `global.anthropic.claude-haiku-4-5-20251001-v1:0` | `global.anthropic.claude-haiku-4-5-20251001-v1:0` |
 | **`/f3rva/{env}/f3nation_api_key`** | `SecureString` | Upstream API key for `api.f3nation.com` *(Existing parameter)* | `f3nation-dev-api-key` | `f3nation-prod-api-key` |
 | **`/f3rva/{env}/f3_region_id`** *(Optional)* | `String` | Region ID for Richmond VA (defaults to `25240`) | `25240` | `25240` |
 
@@ -97,9 +99,22 @@ aws ssm put-parameter \
   --type "SecureString" \
   --overwrite
 
-# 6. AWS Bedrock Model ID for AI Backblast TL;DR Summaries
+# 6. Slack #1st-f-fitness Channel ID (Weekly Digest)
 aws ssm put-parameter \
-  --name "/f3rva/dev/bedrock_model_id" \
+  --name "/f3rva/dev/slack_fitness_channel_id" \
+  --value "C0123456789" \
+  --type "String" \
+  --overwrite
+
+# 7. AWS Bedrock Model IDs (Per-Post Teaser & Weekly Digest)
+aws ssm put-parameter \
+  --name "/f3rva/dev/bedrock_model_id_post_teaser" \
+  --value "global.anthropic.claude-haiku-4-5-20251001-v1:0" \
+  --type "String" \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/f3rva/dev/bedrock_model_id_weekly_digest" \
   --value "global.anthropic.claude-haiku-4-5-20251001-v1:0" \
   --type "String" \
   --overwrite
@@ -148,9 +163,22 @@ aws ssm put-parameter \
   --type "SecureString" \
   --overwrite
 
-# 6. AWS Bedrock Model ID for AI Backblast TL;DR Summaries
+# 6. Slack #1st-f-fitness Channel ID (Weekly Digest)
 aws ssm put-parameter \
-  --name "/f3rva/prod/bedrock_model_id" \
+  --name "/f3rva/prod/slack_fitness_channel_id" \
+  --value "C0123456789" \
+  --type "String" \
+  --overwrite
+
+# 7. AWS Bedrock Model IDs (Per-Post Teaser & Weekly Digest)
+aws ssm put-parameter \
+  --name "/f3rva/prod/bedrock_model_id_post_teaser" \
+  --value "global.anthropic.claude-haiku-4-5-20251001-v1:0" \
+  --type "String" \
+  --overwrite
+
+aws ssm put-parameter \
+  --name "/f3rva/prod/bedrock_model_id_weekly_digest" \
   --value "global.anthropic.claude-haiku-4-5-20251001-v1:0" \
   --type "String" \
   --overwrite
@@ -166,6 +194,7 @@ This stack creates the unified REST API infrastructure for F3 RVA:
 * **API Gateway HTTP API (v2)** (`f3rva-{env}-http-api`): Low-latency serverless HTTP API gateway providing native payload handling, proxy routing, and direct internal Lambda execution (`lambda:InvokeFunction`).
 * **CloudFront Distribution**: Custom domain (`api.dev.f3rva.org` / `api.f3rva.org`) backed by the wildcard ACM certificate. Routes dynamic REST requests to API Gateway with caching disabled, and optimizes `/schedule` with 1-hour edge caching.
 * **Route53 DNS**: Creates an alias A-record pointing the `api` subdomain to the CloudFront distribution.
+* **EventBridge Scheduler (`f3rva-{env}-weekly-digest`)**: Invokes `apiLambda` every Sunday at 6:00 PM `America/New_York` (`ENABLED` in `prod`, `DISABLED` in `dev`) with `{"_scheduled_task": "weekly_digest"}` to post the weekly digest to `#1st-f-fitness`.
 
 ### DNS
 This stack creates the Route53 hosted zones to support DNS. This currently creates the hosted zone and adds an MX record to receive emails.
